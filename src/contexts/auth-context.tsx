@@ -1,8 +1,3 @@
-/**
- * BB Maintenance - Contexto de Autenticación
- * Gestiona el estado global de autenticación y permisos de usuario
- */
-
 'use client';
 
 import {
@@ -13,9 +8,35 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
-import { useMutation, useLazyQuery } from '@/lib/graphql/hooks';
-import { LOGIN_MUTATION, ME_QUERY } from '@/lib/graphql/queries';
-import type { User, AuthContextType } from '@/lib/types';
+import { useMutation, useApolloClient } from '@apollo/client/react';
+import { LoginDocument, MeDocument, UserBasicFragmentDoc } from '@/lib/graphql/generated/graphql';
+import { useFragment as unmaskFragment } from '@/lib/graphql/generated/fragment-masking';
+
+/** Fully-resolved user type (no fragment masking) */
+export interface AuthUser {
+  id: string;
+  employeeNumber: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email?: string | null;
+  isActive: boolean;
+  role: {
+    id: string;
+    name: string;
+  };
+}
+
+interface AuthContextType {
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (employeeNumber: string, password: string) => Promise<boolean>;
+  logout: () => void;
+  isAdmin: boolean;
+  isTechnician: boolean;
+  isRequester: boolean;
+}
 
 // Crear contexto con valor por defecto
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,47 +45,36 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-interface LoginResponse {
-  login: {
-    token: string;
-    user: User;
-  };
-}
-
-interface MeResponse {
-  me: User;
-}
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [loginMutation] = useMutation<LoginResponse, { employeeNumber: string; password: string }>(
-    LOGIN_MUTATION
-  );
-  
-  const [getMeQuery] = useLazyQuery<MeResponse>(ME_QUERY);
+  const [loginMutation] = useMutation(LoginDocument);
+  const client = useApolloClient();
 
-  // Verificar si hay un token guardado al cargar la app
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('auth_token');
-      
+
       if (!token) {
         setIsLoading(false);
         return;
       }
 
       try {
-        const { data } = await getMeQuery();
-        
+        const { data } = await client.query({
+          query: MeDocument,
+          fetchPolicy: 'network-only',
+        });
+
         if (data?.me) {
-          setUser(data.me);
+          setUser(unmaskFragment(UserBasicFragmentDoc, data.me) as unknown as AuthUser);
         } else {
           localStorage.removeItem('auth_token');
         }
       } catch (error) {
-        console.error('[v0] Error al verificar autenticación:', error);
+        console.error('Error auth:', error);
         localStorage.removeItem('auth_token');
       } finally {
         setIsLoading(false);
@@ -72,28 +82,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     checkAuth();
-  }, [getMeQuery]);
+  }, [client]);
 
   // Función de login
   const login = useCallback(
     async (employeeNumber: string, password: string): Promise<boolean> => {
       try {
-        const { data, errors } = await loginMutation({
+        const { data } = await loginMutation({
           variables: { employeeNumber, password },
         });
 
-        if (errors || !data?.login) {
-          console.error('[v0] Error al iniciar sesión:', errors);
-          return false;
+        if (data?.login) {
+          const { accessToken, user: loggedUser } = data.login;
+          localStorage.setItem('auth_token', accessToken);
+          setUser(unmaskFragment(UserBasicFragmentDoc, loggedUser) as unknown as AuthUser);
+          return true;
         }
-
-        const { token, user: loggedUser } = data.login;
-        localStorage.setItem('auth_token', token);
-        setUser(loggedUser);
-
-        return true;
+        return false;
       } catch (error) {
-        console.error('[v0] Error al iniciar sesión:', error);
+        console.error('Login error:', error);
         return false;
       }
     },
@@ -106,61 +113,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
   }, []);
 
+  const isAdmin = user?.role?.name === 'ADMIN';
+  const isTechnician = user?.role?.name === 'TECHNICIAN';
+  const isRequester = user?.role?.name === 'REQUESTER';
+
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
     isLoading,
     login,
     logout,
+    isAdmin,
+    isTechnician,
+    isRequester,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// Hook para usar el contexto de autenticación
-export function useAuth(): AuthContextType {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth debe usarse dentro de un AuthProvider');
   }
   return context;
-}
-
-// Función auxiliar para verificar permisos
-export function hasPermission(
-  user: User | null,
-  permission: string
-): boolean {
-  if (!user) return false;
-
-  const permissions: Record<string, string[]> = {
-    // Solicitante
-    'ot:create': ['solicitante', 'administrador'],
-    'ot:view_own': ['solicitante', 'tecnico', 'administrador'],
-    
-    // Técnico
-    'ot:view_assigned': ['tecnico', 'administrador'],
-    'ot:update_technical': ['tecnico'],
-    'ot:start': ['tecnico'],
-    'ot:complete': ['tecnico'],
-    'shift:view_own': ['tecnico', 'administrador'],
-    
-    // Administrador
-    'ot:view_all': ['administrador'],
-    'ot:assign': ['administrador'],
-    'ot:update_admin': ['administrador'],
-    'ot:sign': ['administrador'],
-    'ot:cancel': ['administrador'],
-    'shift:manage': ['administrador'],
-    'dashboard:view': ['administrador'],
-    'users:view': ['administrador'],
-  };
-
-  return permissions[permission]?.includes(user.role) ?? false;
-}
-
-// Hook para verificar permisos
-export function usePermission(permission: string): boolean {
-  const { user } = useAuth();
-  return hasPermission(user, permission);
 }

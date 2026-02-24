@@ -1,14 +1,19 @@
-'use client';
-
-/**
- * BB Maintenance - Admin Ordenes Page
- * Lista de ordenes de trabajo con filtros y asignacion
- * Componente React puro (sin dependencias de Next.js)
- */
-
 import { useState } from 'react';
-import { useQuery, useMutation, gql } from '@/lib/graphql/hooks';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useQuery } from '@apollo/client/react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+
+import {
+  GetWorkOrdersFilteredDocument,
+  type WorkOrderStatus,
+  type WorkOrderPriority,
+  WorkOrderItemFragmentDoc,
+  AreaBasicFragmentDoc,
+  MachineBasicFragmentDoc,
+  UserBasicFragmentDoc,
+} from '@/lib/graphql/generated/graphql';
+import { useFragment as unmaskFragment } from '@/lib/graphql/generated/fragment-masking';
+
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -18,18 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { StatusBadge, PriorityBadge, MaintenanceTypeBadge } from '@/components/ui/status-badge';
 import { WorkOrderListSkeleton } from '@/components/ui/skeleton-loaders';
-import { useNotification } from '@/contexts/notification-context';
 import {
   Search,
   Filter,
@@ -37,133 +32,72 @@ import {
   Calendar,
   MapPin,
   AlertTriangle,
-  Eye,
+  ChevronRight,
+  Wrench,
+  ClipboardList,
 } from 'lucide-react';
 
-const GET_ALL_WORK_ORDERS = gql`
-  query GetAllWorkOrders($filter: WorkOrderFilterInput) {
-    workOrders(filter: $filter) {
-      id
-      code
-      title
-      description
-      status
-      priority
-      workType
-      createdAt
-      scheduledDate
-      location {
-        name
-        area
-      }
-      asset {
-        name
-        code
-      }
-      requestedBy {
-        firstName
-        lastName
-      }
-      assignedTo {
-        id
-        firstName
-        lastName
-      }
-    }
-    technicians {
-      id
-      firstName
-      lastName
-      specialty
-      available
-    }
-  }
-`;
+const STATUS_TABS: { value: WorkOrderStatus | 'all'; label: string }[] = [
+  { value: 'all', label: 'Todas' },
+  { value: 'PENDING', label: 'Pendientes' },
+  { value: 'IN_PROGRESS', label: 'En Progreso' },
+  { value: 'PAUSED', label: 'En Pausa' },
+  { value: 'COMPLETED', label: 'Completadas' },
+  { value: 'TEMPORARY_REPAIR', label: 'Reparación Temporal' },
+];
 
-const ASSIGN_TECHNICIAN = gql`
-  mutation AssignTechnician($workOrderId: ID!, $technicianId: ID!) {
-    assignTechnician(workOrderId: $workOrderId, technicianId: $technicianId) {
-      id
-      status
-      assignedTo {
-        id
-        firstName
-        lastName
-      }
-    }
-  }
-`;
-
-interface WorkOrder {
-  id: string;
-  code: string;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  workType: string;
-  createdAt: string;
-  scheduledDate?: string;
-  location?: { name: string; area: string };
-  asset?: { name: string; code: string };
-  requestedBy?: { firstName: string; lastName: string };
-  assignedTo?: { id: string; firstName: string; lastName: string };
-}
+const PRIORITY_TABS: { value: WorkOrderPriority | 'all'; label: string }[] = [
+  { value: 'all', label: 'Todas' },
+  { value: 'CRITICAL', label: 'Críticas' },
+  { value: 'HIGH', label: 'Altas' },
+  { value: 'MEDIUM', label: 'Medias' },
+  { value: 'LOW', label: 'Bajas' },
+];
 
 function OrdenesPage() {
-  // TODO: En produccion, usar useSearchParams() de react-router-dom
-  const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
-  const { showNotification } = useNotification();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>(urlParams.get('status') || 'all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<{ id: string; code: string; title: string } | null>(null);
-  const [selectedTechnician, setSelectedTechnician] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<WorkOrderStatus | 'all'>(
+    (searchParams.get('status') as WorkOrderStatus) || 'all'
+  );
 
-  const filter: { status?: string; priority?: string } = {};
-  if (statusFilter !== 'all') filter.status = statusFilter;
-  if (priorityFilter !== 'all') filter.priority = priorityFilter;
-
-  const { data, loading, error, refetch } = useQuery(GET_ALL_WORK_ORDERS, {
-    variables: { filter: Object.keys(filter).length > 0 ? filter : undefined },
-  });
-
-  const [assignTechnician, { loading: assigning }] = useMutation(ASSIGN_TECHNICIAN, {
-    onCompleted: () => {
-      showNotification('success', 'Tecnico asignado correctamente');
-      setAssignDialogOpen(false);
-      setSelectedOrder(null);
-      setSelectedTechnician('');
-      refetch();
-    },
-    onError: (err) => {
-      showNotification('error', `Error: ${err.message}`);
-    },
-  });
-
-  const handleAssign = () => {
-    if (selectedOrder && selectedTechnician) {
-      assignTechnician({
-        variables: {
-          workOrderId: selectedOrder.id,
-          technicianId: selectedTechnician,
-        },
-      });
+  const handleStatusChange = (val: WorkOrderStatus | 'all') => {
+    setStatusFilter(val);
+    if (val !== 'all') {
+      setSearchParams({ status: val });
+    } else {
+      setSearchParams({});
     }
   };
+  const [priorityFilter, setPriorityFilter] = useState<WorkOrderPriority | 'all'>('all');
 
-  const openAssignDialog = (order: { id: string; code: string; title: string }) => {
-    setSelectedOrder(order);
-    setAssignDialogOpen(true);
-  };
+  const { data, loading, error } = useQuery(GetWorkOrdersFilteredDocument, {
+    variables: {
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      priority: priorityFilter !== 'all' ? priorityFilter : undefined,
+    },
+    fetchPolicy: 'cache-and-network',
+  });
 
-  const handleNavigate = (href: string) => {
-    // TODO: En produccion, usar navigate(href) de react-router-dom
-    window.location.href = href;
-  };
+  const workOrders = unmaskFragment(WorkOrderItemFragmentDoc, data?.workOrdersFiltered.data || []);
 
-  if (loading) return <WorkOrderListSkeleton />;
+
+  const filteredOrders = workOrders.filter((order) => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+
+    const machine = unmaskFragment(MachineBasicFragmentDoc, order.machine);
+
+    return (
+      order.folio?.toLowerCase().includes(term) ||
+      order.description?.toLowerCase().includes(term) ||
+      machine?.name?.toLowerCase().includes(term) ||
+      machine?.code?.toLowerCase().includes(term)
+    );
+  });
+
+  if (loading && !data) return <WorkOrderListSkeleton count={5} />;
 
   if (error) {
     return (
@@ -177,18 +111,6 @@ function OrdenesPage() {
     );
   }
 
-  const orders: WorkOrder[] = data?.workOrders || [];
-  const technicians = data?.technicians || [];
-
-  const filteredOrders = orders.filter((order) => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      order.code?.toLowerCase().includes(term) ||
-      order.title?.toLowerCase().includes(term) ||
-      order.description?.toLowerCase().includes(term)
-    );
-  });
 
   return (
     <div className="space-y-6">
@@ -198,9 +120,11 @@ function OrdenesPage() {
             Gestion de Ordenes de Trabajo
           </h1>
           <p className="text-muted-foreground">
-            Administra y asigna todas las ordenes del sistema
-          </p>
+            {data?.workOrdersFiltered.total || 0} órden(es) en total ({filteredOrders.length} visibles)          </p>
         </div>
+        <Button onClick={() => navigate('/admin/crear-ot')}>
+          Crear nueva Orden de Trabajo
+        </Button>
       </div>
 
       {/* Filters */}
@@ -208,38 +132,34 @@ function OrdenesPage() {
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
             <div className="relative flex-1">
+              <label htmlFor="orders-search" className="sr-only">Buscar órdenes</label>
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por codigo, titulo o descripcion..."
+                id="orders-search"
+                placeholder="Buscar por folio, descripcion o maquina..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 bg-secondary border-border text-foreground placeholder:text-muted-foreground"
+                className="pl-9"
               />
             </div>
             <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[160px] bg-secondary border-border text-foreground">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
+              <Select value={statusFilter} onValueChange={(val) => handleStatusChange(val as WorkOrderStatus | 'all')}>                <SelectTrigger className="w-[160px]">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="PENDIENTE">Pendiente</SelectItem>
-                  <SelectItem value="ASIGNADA">Asignada</SelectItem>
-                  <SelectItem value="EN_PROGRESO">En Progreso</SelectItem>
-                  <SelectItem value="COMPLETADA">Completada</SelectItem>
+                  {STATUS_TABS.map((tab) => (
+                    <SelectItem key={tab.value} value={tab.value}>{tab.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="w-[160px] bg-secondary border-border text-foreground">
-                  <SelectValue placeholder="Prioridad" />
-                </SelectTrigger>
+              <Select value={priorityFilter} onValueChange={(val) => setPriorityFilter(val as WorkOrderPriority | 'all')}>                <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Prioridad" />
+              </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="CRITICA">Critica</SelectItem>
-                  <SelectItem value="ALTA">Alta</SelectItem>
-                  <SelectItem value="MEDIA">Media</SelectItem>
-                  <SelectItem value="BAJA">Baja</SelectItem>
+                  {PRIORITY_TABS.map((tab) => (
+                    <SelectItem key={tab.value} value={tab.value}>{tab.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -248,111 +168,74 @@ function OrdenesPage() {
       </Card>
 
       {/* Orders List */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {filteredOrders.length === 0 ? (
-          <Card className="bg-card border-border">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <AlertTriangle className="h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-semibold text-foreground">No se encontraron ordenes</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Intenta ajustar los filtros de busqueda</p>
+          <Card className="bg-card border-border shadow-sm">
+            <CardContent className="py-16 text-center animate-in fade-in">
+              <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-foreground">Sin resultados</h3>
+              <p className="text-sm text-muted-foreground mt-1">No se encontraron órdenes con los filtros actuales</p>
             </CardContent>
           </Card>
         ) : (
-          filteredOrders.map((order) => (
-            <Card key={order.id} className="bg-card border-border hover:border-primary/50 transition-colors">
-              <CardHeader className="pb-2">
-                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-sm font-semibold text-primary">{order.code}</span>
-                    <StatusBadge status={order.status} />
-                    <StatusBadge priority={order.priority} variant="priority" />
-                  </div>
-                  <div className="flex gap-2">
-                    {(order.status === 'PENDIENTE' || order.status === 'ASIGNADA') && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openAssignDialog(order)}
-                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                      >
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        {order.assignedTo ? 'Reasignar' : 'Asignar'}
-                      </Button>
-                    )}
-                    <Button variant="ghost" size="sm" onClick={() => handleNavigate(`/admin/ordenes/${order.id}`)}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      Ver detalle
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CardTitle className="text-lg text-foreground mb-2">{order.title}</CardTitle>
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{order.description}</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{order.location?.name || 'Sin ubicacion'}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>{new Date(order.createdAt).toLocaleDateString('es-ES')}</span>
-                  </div>
-                  {order.assignedTo && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <UserPlus className="h-4 w-4" />
-                      <span>{order.assignedTo.firstName} {order.assignedTo.lastName}</span>
+          filteredOrders.map((order) => {
+            const area = unmaskFragment(AreaBasicFragmentDoc, order.area);
+            const machine = unmaskFragment(MachineBasicFragmentDoc, order.machine);
+
+            const leadTechRel = order.technicians?.find(t => t.isLead);
+            const leadTechnician = unmaskFragment(UserBasicFragmentDoc, leadTechRel?.technician);
+
+            return (
+              <Card
+                key={order.id}
+                className="bg-card border-border hover:border-primary/50 hover:shadow-md transition-all shadow-sm cursor-pointer group"
+                onClick={() => navigate(`/admin/orden/${order.id}`)}
+              >
+                <CardContent className="py-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="font-mono text-sm font-bold text-primary group-hover:text-primary/80 transition-colors">{order.folio}</span>
+                        <StatusBadge status={order.status} />
+                        {order.priority && <PriorityBadge priority={order.priority} size="sm" />}
+                        {order.maintenanceType && <MaintenanceTypeBadge type={order.maintenanceType} size="sm" />}
+                      </div>
+
+                      <p className="text-sm text-foreground line-clamp-2">{order.description}</p>
+
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-xs text-muted-foreground">
+                        {area && (
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <MapPin className="h-4 w-4" />
+                            <span>{area.name}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>{new Date(order.createdAt).toLocaleDateString('es-MX')}</span>
+                        </div>
+                        {leadTechnician && (
+                          <div className="flex items-center gap-1.5 font-medium text-primary/80">
+                            <UserPlus className="h-4 w-4" />
+                            <span>Líder: {leadTechnician.firstName} {leadTechnician.lastName}</span>
+                          </div>
+                        )}
+                        {machine && (
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <Wrench className="h-4 w-4" />
+                            <span>{machine.name} [{machine.code}]</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  {order.requestedBy && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <span>Solicitante: {order.requestedBy.firstName} {order.requestedBy.lastName}</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0 hidden md:block" />
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
         )}
       </div>
-
-      {/* Assign Dialog */}
-      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Asignar Tecnico</DialogTitle>
-            <DialogDescription>
-              {selectedOrder && `Asignar tecnico a la orden ${selectedOrder.code}: ${selectedOrder.title}`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Tecnico</Label>
-              <Select value={selectedTechnician} onValueChange={setSelectedTechnician}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar tecnico" />
-                </SelectTrigger>
-                <SelectContent>
-                  {technicians.map((tech: { id: string; firstName: string; lastName: string; specialty: string; available: boolean }) => (
-                    <SelectItem key={tech.id} value={tech.id} disabled={!tech.available}>
-                      {tech.firstName} {tech.lastName} - {tech.specialty}
-                      {!tech.available && ' (No disponible)'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignDialogOpen(false)} className="bg-transparent">
-              Cancelar
-            </Button>
-            <Button onClick={handleAssign} disabled={!selectedTechnician || assigning}>
-              {assigning ? 'Asignando...' : 'Asignar'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

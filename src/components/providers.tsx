@@ -5,8 +5,8 @@
 
 'use client';
 
-import { ApolloProvider } from '@apollo/client';
-import { apolloClient } from '@/lib/graphql/client';
+import { ApolloProvider } from '@apollo/client/react';
+import { client } from '@/lib/graphql/client';
 import { AuthProvider } from '@/contexts/auth-context';
 import { NotificationProvider } from '@/contexts/notification-context';
 import type { ReactNode } from 'react';
@@ -17,7 +17,7 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <ApolloProvider client={apolloClient}>
+    <ApolloProvider client={client}>
       <AuthProvider>
         <NotificationProvider>
           {children}

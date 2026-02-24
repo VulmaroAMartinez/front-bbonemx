@@ -1,145 +1,173 @@
-/**
- * BB Maintenance - Login Page
- * Página de inicio de sesión
- */
-
 'use client';
 
 import React from "react"
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wrench, AlertCircle, User, Lock } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, User, Lock, Loader2 } from 'lucide-react';
+import logo from '@/assets/logo2.png';
+
+const loginSchema = yup.object({
+  employeeNumber: yup
+    .string()
+    .required('El número de empleado es obligatorio.')
+    .matches(/^\d+$/, 'El número de empleado debe contener solo números.')
+    .min(3, 'El número de empleado debe tener al menos 3 dígitos.'),
+  password: yup
+    .string()
+    .required('La contraseña es obligatoria.')
+    .min(6, 'La contraseña debe tener al menos 6 caracteres.'),
+});
+
+type LoginFormValues = yup.InferType<typeof loginSchema>;
 
 function LoginPage() {
   const { login, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [employeeNumber, setEmployeeNumber] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const location = useLocation();
 
-  // Redirigir si ya esta autenticado
+  const [formError, setFormError] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: yupResolver(loginSchema),
+    defaultValues: {
+      employeeNumber: '',
+      password: '',
+    },
+  });
+
+  const from = location.state?.from?.pathname || '/';
+
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/', { replace: true });
+    if (isAuthenticated && !isLoading) {
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, isLoading, navigate, from]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsSubmitting(true);
+  const onSubmit = async (values: LoginFormValues) => {
+    setFormError('');
 
     try {
-      const success = await login(employeeNumber, password);
-      
-      if (!success) {
-        setError('Número de empleado o contraseña incorrectos');
+      const success = await login(values.employeeNumber, values.password);
+
+      if (success) {
+        navigate(from, { replace: true });
+      } else {
+        setFormError('Credenciales incorrectas. Verifica tu número de empleado y contraseña.');
       }
     } catch (err) {
-      setError('Error al iniciar sesión. Intente nuevamente.');
-      console.error('[v0] Error en login:', err);
-    } finally {
-      setIsSubmitting(false);
+      console.error('Error crítico en login:', err);
+      setFormError('Ocurrió un error inesperado. Por favor intenta más tarde.');
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md shadow-lg border-gray-200 dark:border-gray-800">
         <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto h-14 w-14 rounded-lg bg-primary flex items-center justify-center mb-2">
-            <Wrench className="h-8 w-8 text-primary-foreground" />
+          <div className="flex justify-center">
+            <img src={logo} alt="Logo" className="
+          w-40 h-40 
+          md:w-36 md:h-36
+          object-contain 
+          rounded-full 
+          shadow-lg
+        "/>
           </div>
-          <CardTitle className="text-2xl font-bold">BB Maintenance</CardTitle>
-          <CardDescription>Sistema de Gestión de Mantenimiento</CardDescription>
+          <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">Bienvenido</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">Sistema de Gestión de Mantenimiento</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="employeeNumber">Número de Empleado</Label>
+              <Label htmlFor="employeeNumber" className="text-sm font-medium">
+                Número de Empleado
+              </Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground/60" />
                 <Input
                   id="employeeNumber"
                   type="text"
                   placeholder="Ej: 1001"
-                  value={employeeNumber}
-                  onChange={(e) => setEmployeeNumber(e.target.value)}
-                  className="pl-9"
-                  required
+                  {...register('employeeNumber')}
+                  className="pl-10 h-11"
+                  disabled={isSubmitting}
                   autoComplete="username"
+                  autoFocus
+                  aria-invalid={!!errors.employeeNumber}
                 />
               </div>
+              {errors.employeeNumber && (
+                <p className="text-xs text-destructive">{errors.employeeNumber.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground/60" />
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-9"
-                  required
+                  {...register('password')}
+                  className="pl-10 h-11"
+                  disabled={isSubmitting}
                   autoComplete="current-password"
+                  aria-invalid={!!errors.password}
                 />
               </div>
+              {errors.password && (
+                <p className="text-xs text-destructive">{errors.password.message}</p>
+              )}
             </div>
 
-            {error && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <p className="text-sm">{error}</p>
-              </div>
+            {formError && (
+              <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{formError}</AlertDescription>
+              </Alert>
             )}
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full h-11 text-base font-medium shadow-sm hover:shadow-md transition-all"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                </>
+              ) : (
+                'Iniciar Sesión'
+              )}
             </Button>
           </form>
-
-          <div className="mt-6 pt-6 border-t border-border">
-            <p className="text-sm text-muted-foreground text-center mb-3">
-              Usuarios de demostración:
-            </p>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between p-2 rounded bg-muted/50">
-                <span className="text-muted-foreground">Admin:</span>
-                <span className="font-mono">1001 / demo123</span>
-              </div>
-              <div className="flex justify-between p-2 rounded bg-muted/50">
-                <span className="text-muted-foreground">Técnico:</span>
-                <span className="font-mono">2001 / demo123</span>
-              </div>
-              <div className="flex justify-between p-2 rounded bg-muted/50">
-                <span className="text-muted-foreground">Solicitante:</span>
-                <span className="font-mono">3001 / demo123</span>
-              </div>
-            </div>
-          </div>
         </CardContent>
+        <CardFooter className="flex flex-col gap-2 border-t pt-6 text-center text-xs text-muted-foreground">
+          <p>¿Olvidaste tu contraseña? Contacta al Administrador.</p>
+        </CardFooter>
       </Card>
     </div>
   );

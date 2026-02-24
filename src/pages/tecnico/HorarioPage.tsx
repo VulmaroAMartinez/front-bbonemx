@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useQuery } from '@/lib/graphql/hooks';
+import { useQuery } from '@apollo/client/react';
 import { useAuth } from '@/contexts/auth-context';
 import { GET_WORK_SHIFTS } from '@/lib/graphql/queries';
 import { AppShell } from '@/components/layout/app-shell';

@@ -1,12 +1,7 @@
-/**
- * BB Maintenance - Header de la aplicación
- * Incluye título de página, búsqueda y notificaciones
- */
-
 'use client';
 
 import { useState } from 'react';
-import { useNotifications } from '@/contexts/notification-context';
+import { useNotification } from '@/contexts/notification-context';
 import { Bell, Menu, Check, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,20 +16,22 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { MobileNav } from './mobile-nav';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import type { NotificationType } from '@/lib/graphql/generated/graphql';
 
 interface HeaderProps {
-  title: string;
+  title?: string;
   subtitle?: string;
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotification();  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Formatear fecha relativa
@@ -45,23 +42,24 @@ export function Header({ title, subtitle }: HeaderProps) {
         locale: es,
       });
     } catch {
-      return dateStr;
+      return 'Reciente';
     }
   }
 
   // Obtener icono según tipo de notificación
-  function getNotificationIcon(type: string) {
+  function getNotificationColor(type: NotificationType) {
     switch (type) {
-      case 'ot_created':
-        return <div className="h-2 w-2 rounded-full bg-primary" />;
-      case 'ot_assigned':
-        return <div className="h-2 w-2 rounded-full bg-chart-3" />;
-      case 'ot_status_changed':
-        return <div className="h-2 w-2 rounded-full bg-chart-4" />;
-      case 'ot_completed':
-        return <div className="h-2 w-2 rounded-full bg-success" />;
+      case 'WORK_ORDER_CREATED_BY_REQUESTER':
+      case 'PREVENTIVE_TASK_WO_GENERATED':
+        return 'bg-blue-500'; // Nuevas tareas
+      case 'WORK_ORDER_ASSIGNED':
+        return 'bg-yellow-500'; // Asignación
+      case 'WORK_ORDER_COMPLETED':
+        return 'bg-green-500'; // Completado
+      case 'WORK_ORDER_TEMPORARY_REPAIR':
+        return 'bg-orange-500'; // Reparación temporal
       default:
-        return <div className="h-2 w-2 rounded-full bg-muted-foreground" />;
+        return 'bg-gray-400';
     }
   }
 
@@ -75,7 +73,8 @@ export function Header({ title, subtitle }: HeaderProps) {
             <span className="sr-only">Abrir menú</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0">
+        <SheetContent side="left" className="w-72 p-0" aria-describedby={undefined}>
+          <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
           <MobileNav onClose={() => setIsMobileMenuOpen(false)} />
         </SheetContent>
       </Sheet>
@@ -137,24 +136,24 @@ export function Header({ title, subtitle }: HeaderProps) {
                     key={notification.id}
                     className={cn(
                       'flex items-start gap-3 p-3 cursor-pointer',
-                      !notification.read && 'bg-accent/50'
+                      !notification.readAt && 'bg-accent/50'
                     )}
                     onClick={() => markAsRead(notification.id)}
                   >
-                    <div className="mt-1.5">{getNotificationIcon(notification.type)}</div>
+                    <div className={`mt-1.5 h-2 w-2 rounded-full ${getNotificationColor(notification.type)}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground">
                         {notification.title}
                       </p>
                       <p className="text-xs text-muted-foreground line-clamp-2">
-                        {notification.message}
+                        {notification.body}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {formatDate(notification.createdAt)}
                       </p>
                     </div>
-                    {notification.read && (
+                    {notification.readAt && (
                       <Check className="h-4 w-4 text-muted-foreground shrink-0" />
                     )}
                   </DropdownMenuItem>

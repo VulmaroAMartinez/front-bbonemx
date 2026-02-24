@@ -1,7 +1,7 @@
 /**
  * BB Maintenance - Sistema de Gestión de Mantenimiento Industrial
  * Definiciones de tipos TypeScript
- */
+
 
 // Roles del sistema
 export type UserRole = 'solicitante' | 'tecnico' | 'administrador';
@@ -176,3 +176,12 @@ export interface CreateShiftForm {
   endTime: string;
   notes?: string;
 }
+ */
+
+export enum UserRole {
+    ADMIN = 'ADMIN',
+    TECHNICIAN = 'TECHNICIAN',
+    REQUESTER = 'REQUESTER',
+}
+
+export type AllowedRole = UserRole | string;

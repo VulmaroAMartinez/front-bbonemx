@@ -7,9 +7,10 @@
  */
 
 import { useState } from 'react';
-import { useQuery, gql } from '@/lib/graphql/hooks';
+import { useQuery } from '@apollo/client/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { gql } from '@apollo/client';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { TechnicianListSkeleton } from '@/components/ui/skeleton-loaders';

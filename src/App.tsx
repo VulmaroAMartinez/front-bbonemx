@@ -4,10 +4,11 @@
  * Cada ruta esta protegida por rol usando ProtectedRoute.
  */
 
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Providers } from '@/components/providers';
-import { ProtectedRoute } from '@/components/protected-route';
-
+import { ProtectedRoute } from './components/protected-route';
+import { AppShell } from './components/layout/app-shell';
+import { UserRole } from './lib/types';
 // Pages
 import LoginPage from '@/pages/LoginPage';
 import HomePage from '@/pages/HomePage';
@@ -15,9 +16,9 @@ import HomePage from '@/pages/HomePage';
 // Admin
 import AdminDashboardPage from '@/pages/admin/DashboardPage';
 import AdminOrdenesPage from '@/pages/admin/OrdenesPage';
-import AdminOrdenDetallePage from '@/pages/admin/OrdenDetallePage';
+import AdminOrdenDetallePage from '@/pages/admin/AdminOrdenDetallePage';
 import AdminCrearOTPage from '@/pages/admin/CrearOTPage';
-import AdminAsignarPage from '@/pages/admin/AsignarPage';
+import FindingPage from './pages/admin/FindingPage';
 import AdminHorariosPage from '@/pages/admin/HorariosPage';
 import AdminTecnicosPage from '@/pages/admin/TecnicosPage';
 
@@ -32,150 +33,64 @@ import SolicitanteCrearOTPage from '@/pages/solicitante/CrearOTPage';
 import SolicitanteMisOrdenesPage from '@/pages/solicitante/MisOrdenesPage';
 
 // Shared
-import OrdenDetallePage from '@/pages/shared/OrdenDetallePage';
+import OrdenDetallePage from '@/pages/solicitante/OrdenDetallePage';
 import PerfilPage from '@/pages/shared/PerfilPage';
+import NewFindingPage from './pages/admin/NewFindingPage';
+
+const ShellLayout = ({ title }: { title: string }) => (
+  <AppShell title={title}>
+    <Outlet />
+  </AppShell>
+)
 
 function App() {
   return (
     <BrowserRouter>
       <Providers>
         <Routes>
-          {/* Public */}
+          {/* Rutas Públicas */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Home redirect */}
+          <Route element={<ProtectedRoute allowedRoles={[UserRole.ADMIN]} />}>
+
+            <Route element={<ShellLayout title="Panel de Administración" />}>
+              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+              <Route path="/admin/ordenes" element={<AdminOrdenesPage />} />
+              <Route path="/admin/orden/:id" element={<AdminOrdenDetallePage />} />
+              <Route path='/hallazgos' element={<FindingPage />} />
+              <Route path='/hallazgos/nuevo' element={<NewFindingPage />} />
+              <Route path="/admin/crear-ot" element={<AdminCrearOTPage />} />
+              {/* <Route path="/admin/horarios" element={<AdminHorariosPage />} /> */}
+              {/* <Route path="/admin/tecnicos" element={<AdminTecnicosPage />} /> */}
+            </Route>
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={[UserRole.TECHNICIAN]} />}>
+            <Route element={<ShellLayout title="Portal Técnico" />}>
+              <Route path="/tecnico/pendientes" element={<TecnicoPendientesPage />} />
+              {/* <Route path="/tecnico/horario" element={<TecnicoHorarioPage />} /> */}
+              <Route path="/tecnico/asignaciones" element={<TecnicoAsignacionesPage />} />
+              <Route path="/tecnico/orden/:id" element={<TecnicoOrdenPage />} />
+            </Route>
+          </Route>
+
+          {/* SOLICITANTE */}
+          <Route element={<ProtectedRoute allowedRoles={[UserRole.REQUESTER]} />}>
+            <Route element={<ShellLayout title="Portal Solicitante" />}>
+              <Route path="/solicitante/mis-ordenes" element={<SolicitanteMisOrdenesPage />} />
+              <Route path="/solicitante/crear-ot" element={<SolicitanteCrearOTPage />} />
+              <Route path="/solicitante/ordenes/:id" element={<OrdenDetallePage />} />
+            </Route>
+          </Route>
+
+          <Route element={<ProtectedRoute />}>
+            <Route element={<ShellLayout title="Mi Cuenta" />}>
+              <Route path="/perfil" element={<PerfilPage />} />
+            </Route>
+          </Route>
+
+          {/* Redirecciones y 404 */}
           <Route path="/" element={<HomePage />} />
-
-          {/* Admin routes */}
-          <Route
-            path="/admin/dashboard"
-            element={
-              <ProtectedRoute allowedRoles={['administrador']}>
-                <AdminDashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/ordenes"
-            element={
-              <ProtectedRoute allowedRoles={['administrador']}>
-                <AdminOrdenesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/ordenes/:id"
-            element={
-              <ProtectedRoute allowedRoles={['administrador']}>
-                <AdminOrdenDetallePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/crear-ot"
-            element={
-              <ProtectedRoute allowedRoles={['administrador']}>
-                <AdminCrearOTPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/asignar"
-            element={
-              <ProtectedRoute allowedRoles={['administrador']}>
-                <AdminAsignarPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/horarios"
-            element={
-              <ProtectedRoute allowedRoles={['administrador']}>
-                <AdminHorariosPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/tecnicos"
-            element={
-              <ProtectedRoute allowedRoles={['administrador']}>
-                <AdminTecnicosPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-
-          {/* Tecnico routes */}
-          <Route
-            path="/tecnico/asignaciones"
-            element={
-              <ProtectedRoute allowedRoles={['tecnico']}>
-                <TecnicoAsignacionesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/tecnico/pendientes"
-            element={
-              <ProtectedRoute allowedRoles={['tecnico']}>
-                <TecnicoPendientesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/tecnico/horario"
-            element={
-              <ProtectedRoute allowedRoles={['tecnico']}>
-                <TecnicoHorarioPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/tecnico/orden/:id"
-            element={
-              <ProtectedRoute allowedRoles={['tecnico']}>
-                <TecnicoOrdenPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Solicitante routes */}
-          <Route
-            path="/solicitante/crear-ot"
-            element={
-              <ProtectedRoute allowedRoles={['solicitante']}>
-                <SolicitanteCrearOTPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/solicitante/mis-ordenes"
-            element={
-              <ProtectedRoute allowedRoles={['solicitante']}>
-                <SolicitanteMisOrdenesPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Shared routes (all authenticated) */}
-          <Route
-            path="/ordenes/:id"
-            element={
-              <ProtectedRoute allowedRoles={['administrador', 'tecnico', 'solicitante']}>
-                <OrdenDetallePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/perfil"
-            element={
-              <ProtectedRoute allowedRoles={['administrador', 'tecnico', 'solicitante']}>
-                <PerfilPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Providers>

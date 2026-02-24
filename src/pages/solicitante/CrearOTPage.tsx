@@ -1,115 +1,186 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { useQuery, useMutation } from '@/lib/graphql/hooks';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useLazyQuery } from '@apollo/client/react';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import { useAuth } from '@/contexts/auth-context';
-import { GET_AREAS, CREATE_WORK_ORDER } from '@/lib/graphql/queries';
-import { AppShell } from '@/components/layout/app-shell';
+import {
+  CreateWorkOrderDocument,
+  UploadWorkOrderPhotoDocument,
+  GetAreasDocument,
+  GetSubAreasByAreaDocument,
+  AreaBasicFragmentDoc,
+  SubAreaBasicFragmentDoc,
+} from '@/lib/graphql/generated/graphql';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { FileText, MapPin, AlertTriangle, CheckCircle, Send, ArrowLeft } from 'lucide-react';
-import type { Area, OTType, OTPriority } from '@/lib/types';
+import { FileText, MapPin, CheckCircle, Send, ArrowLeft, ImageIcon, Loader2 } from 'lucide-react';
+import { useFragment as unmaskFragment } from '@/lib/graphql/generated';
 
-const OT_TYPES: { value: OTType; label: string }[] = [
-  { value: 'correctivo', label: 'Correctivo' },
-  { value: 'preventivo', label: 'Preventivo' },
-  { value: 'predictivo', label: 'Predictivo' },
-  { value: 'mejora', label: 'Mejora' },
-  { value: 'emergencia', label: 'Emergencia' },
-];
+const crearOTSchema = yup.object({
+  areaId: yup.string().required('El área es obligatoria.'),
+  subAreaId: yup.string().default(''),
+  description: yup
+    .string()
+    .required('La descripción es obligatoria.')
+    .min(10, 'La descripción debe tener al menos 10 caracteres.')
+    .max(500, 'La descripción no puede exceder 500 caracteres.'),
+});
 
-const PRIORITIES: { value: OTPriority; label: string }[] = [
-  { value: 'baja', label: 'Baja' },
-  { value: 'media', label: 'Media' },
-  { value: 'alta', label: 'Alta' },
-  { value: 'critica', label: 'Critica' },
-];
+type CrearOTFormValues = yup.InferType<typeof crearOTSchema>;
 
 export default function SolicitanteCrearOTPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({
-    description: '',
-    type: '' as OTType | '',
-    priority: '' as OTPriority | '',
-    areaId: '',
-    equipmentDescription: '',
-    notes: '',
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [formError, setFormError] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    setError,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<CrearOTFormValues>({
+    resolver: yupResolver(crearOTSchema),
+    defaultValues: {
+      areaId: '',
+      subAreaId: '',
+      description: '',
+    },
   });
 
-  const { data: areasData } = useQuery(GET_AREAS);
-  const [createWorkOrder, { loading: creating }] = useMutation(CREATE_WORK_ORDER);
+  const { data: areasData } = useQuery(GetAreasDocument);
+  const [getSubAreas, { data: subAreasData }] = useLazyQuery(GetSubAreasByAreaDocument);
+  const [createWorkOrder] = useMutation(CreateWorkOrderDocument);
+  const [uploadPhoto] = useMutation(UploadWorkOrderPhotoDocument);
 
-  const areas: Area[] = areasData?.areas || [];
+  const areas = areasData?.areas ? unmaskFragment(AreaBasicFragmentDoc, areasData.areas) : [];
+  const subAreas = subAreasData?.subAreasByArea ? unmaskFragment(SubAreaBasicFragmentDoc, subAreasData.subAreasByArea) : [];
 
-  const handleChange = (field: string, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  const areaId = watch('areaId');
+  const description = watch('description');
+  const selectedArea = areas.find((a) => a.id === areaId);
+  const isOperational = selectedArea?.type === 'OPERATIONAL';
+
+  const handleAreaChange = (value: string) => {
+    setValue('areaId', value, { shouldValidate: true });
+    setValue('subAreaId', '');
+
+    const area = areas.find(a => a.id === value);
+    if (area?.type === 'OPERATIONAL') {
+      getSubAreas({ variables: { areaId: value } });
+    }
   };
 
-  const isValid = form.description.trim() && form.type && form.priority && form.areaId;
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setPhotoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
 
-  const handleSubmit = useCallback(async () => {
-    if (!isValid || !user) return;
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+  };
+
+  const onSubmit = async (values: CrearOTFormValues) => {
+    setFormError('');
+
+    if (isOperational && !values.subAreaId) {
+      setError('subAreaId', { message: 'La sub-área es obligatoria para áreas operacionales.' });
+      return;
+    }
+
+    if (!user) return;
+
     try {
-      await createWorkOrder({
+      const { data: otData } = await createWorkOrder({
         variables: {
           input: {
-            description: form.description.trim(),
-            type: form.type,
-            priority: form.priority,
-            areaId: form.areaId,
-            equipmentDescription: form.equipmentDescription.trim() || undefined,
-            requesterId: user.id,
-            notes: form.notes.trim() || undefined,
+            areaId: values.areaId,
+            subAreaId: values.subAreaId || undefined,
+            description: values.description.trim(),
           },
         },
       });
+
+      const newWorkOrderId = otData?.createWorkOrder.id;
+
+      if (newWorkOrderId && photoFile) {
+        const mockFilePath = `uploads/${newWorkOrderId}/${photoFile.name}`;
+        await uploadPhoto({
+          variables: {
+            input: {
+              workOrderId: newWorkOrderId,
+              fileName: photoFile.name,
+              mimeType: photoFile.type,
+              photoType: 'BEFORE',
+              filePath: mockFilePath,
+            }
+          }
+        });
+      }
+
       setSubmitted(true);
     } catch (err) {
       console.error('Error creating work order:', err);
+      setFormError('Error al crear la orden de trabajo. Intente de nuevo.');
     }
-  }, [isValid, user, form, createWorkOrder]);
+  };
 
   if (submitted) {
     return (
-      <AppShell>
-        <div className="flex flex-col items-center justify-center py-16">
-          <div className="rounded-full bg-primary/20 p-6 mb-6">
-            <CheckCircle className="h-16 w-16 text-primary" />
-          </div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Orden creada exitosamente</h2>
-          <p className="text-muted-foreground text-center max-w-md mb-8">
-            Tu solicitud de mantenimiento ha sido registrada. Recibiras notificaciones sobre su progreso.
-          </p>
-          <div className="flex gap-4">
-            <Button variant="outline" onClick={() => { setSubmitted(false); setForm({ description: '', type: '', priority: '', areaId: '', equipmentDescription: '', notes: '' }); }}>
-              Crear otra
-            </Button>
-            <Button onClick={() => { window.location.href = '/solicitante/mis-ordenes'; }}>
-              Ver mis ordenes
-            </Button>
-          </div>
+      <div className="flex flex-col items-center justify-center py-16">
+        <div className="rounded-full bg-primary/20 p-6 mb-6">
+          <CheckCircle className="h-16 w-16 text-primary" />
         </div>
-      </AppShell>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Orden creada exitosamente</h2>
+        <p className="text-muted-foreground text-center max-w-md mb-8">
+          Tu solicitud ha sido registrada con estatus pendiente.
+        </p>
+        <div className="flex gap-4">
+          <Button variant="outline" onClick={() => {
+            setSubmitted(false);
+            reset();
+            setPhotoFile(null);
+            setPhotoPreview(null);
+          }}>
+            Crear otra
+          </Button>
+          <Button onClick={() => navigate('/solicitante/mis-ordenes')}>
+            Ver mis órdenes
+          </Button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <AppShell>
       <div className="space-y-6 max-w-2xl mx-auto">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
+          <Button variant="ghost" size="icon" aria-label="Volver" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Nueva Orden de Trabajo</h1>
-            <p className="text-muted-foreground">Completa el formulario para solicitar mantenimiento</p>
+            <h1 className="text-2xl font-bold text-foreground">Nueva Solicitud de Trabajo</h1>
+            <p className="text-muted-foreground">Completa los datos para generar una orden de trabajo</p>
           </div>
         </div>
 
@@ -121,113 +192,134 @@ export default function SolicitanteCrearOTPage() {
             </CardTitle>
             <CardDescription>Los campos marcados con * son obligatorios</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Descripcion del problema *</Label>
-              <Textarea
-                id="description"
-                placeholder="Describe detalladamente el problema o la necesidad de mantenimiento..."
-                value={form.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-                className="min-h-[100px]"
-              />
-            </div>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              {formError && (
+                <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+                  {formError}
+                </div>
+              )}
 
-            {/* Type + Priority */}
-            <div className="grid gap-4 md:grid-cols-2">
+              {/* Area */}
               <div className="space-y-2">
-                <Label>Tipo de mantenimiento *</Label>
-                <Select value={form.type} onValueChange={(v) => handleChange('type', v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar tipo" />
+                <Label htmlFor="sol-area" className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4" /> Area *
+                </Label>
+                <Select value={areaId} onValueChange={handleAreaChange}>
+                  <SelectTrigger id="sol-area">
+                    <SelectValue placeholder="Seleccionar area" />
                   </SelectTrigger>
                   <SelectContent>
-                    {OT_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    {areas.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.areaId && (
+                  <p className="text-xs text-destructive">{errors.areaId.message}</p>
+                )}
               </div>
 
+              {/* Sub-área (Condicional) */}
+              {isOperational && (
+                <div className="space-y-2">
+                  <Label htmlFor="sol-sub-area">Sub-área *</Label>
+                  <Select
+                    value={watch('subAreaId')}
+                    onValueChange={(v) => setValue('subAreaId', v, { shouldValidate: true })}
+                  >
+                    <SelectTrigger id="sol-sub-area">
+                      <SelectValue placeholder="Seleccionar sub-área" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subAreas.length > 0 ? subAreas.map((sa) => (
+                        <SelectItem key={sa.id} value={sa.id}>{sa.name}</SelectItem>
+                      )) : <div className="p-2 text-xs text-muted-foreground">Sin sub-áreas</div>}
+                    </SelectContent>
+                  </Select>
+                  {errors.subAreaId && (
+                    <p className="text-xs text-destructive">{errors.subAreaId.message}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Activity description */}
               <div className="space-y-2">
-                <Label>Prioridad *</Label>
-                <Select value={form.priority} onValueChange={(v) => handleChange('priority', v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar prioridad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRIORITIES.map((p) => (
-                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Area */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" /> Area / Ubicacion *
-              </Label>
-              <Select value={form.areaId} onValueChange={(v) => handleChange('areaId', v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar area" />
-                </SelectTrigger>
-                <SelectContent>
-                  {areas.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Equipment */}
-            <div className="space-y-2">
-              <Label htmlFor="equipment">Equipo o maquina (opcional)</Label>
-              <Input
-                id="equipment"
-                placeholder="Nombre o codigo del equipo afectado"
-                value={form.equipmentDescription}
-                onChange={(e) => handleChange('equipmentDescription', e.target.value)}
-              />
-            </div>
-
-            {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notas adicionales (opcional)</Label>
-              <Textarea
-                id="notes"
-                placeholder="Informacion adicional relevante..."
-                value={form.notes}
-                onChange={(e) => handleChange('notes', e.target.value)}
-              />
-            </div>
-
-            {form.priority === 'critica' && (
-              <div className="flex items-start gap-3 rounded-lg bg-destructive/10 border border-destructive/30 p-4">
-                <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-destructive">Prioridad critica seleccionada</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Las ordenes criticas se atienden de forma inmediata. Asegurate de que la situacion lo amerite.
+                <Label htmlFor="description">Actividad o descripcion *</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe detalladamente la actividad o el problema encontrado..."
+                  {...register('description')}
+                  className="min-h-[120px]"
+                  maxLength={500}
+                />
+                <div className="flex justify-between">
+                  {errors.description ? (
+                    <p className="text-xs text-destructive">{errors.description.message}</p>
+                  ) : <span />}
+                  <p className="text-xs text-muted-foreground">
+                    {description?.length || 0}/500
                   </p>
                 </div>
               </div>
-            )}
 
-            <Button
-              className="w-full gap-2"
-              size="lg"
-              disabled={!isValid || creating}
-              onClick={handleSubmit}
-            >
-              <Send className="h-4 w-4" />
-              {creating ? 'Enviando...' : 'Enviar solicitud'}
-            </Button>
+              {/* Photo (optional) */}
+              <div className="space-y-2">
+                <Label>Foto de la averia o del lugar (opcional)</Label>
+                {photoPreview ? (
+                  <div className="relative">
+                    <img
+                      src={photoPreview}
+                      alt="Vista previa"
+                      width={800}
+                      height={256}
+                      className="w-full max-h-64 object-cover rounded-lg border border-border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={removePhoto}
+                    >
+                      Eliminar
+                    </Button>
+                  </div>
+                ) : (
+                  <label
+                    htmlFor="photo-upload"
+                    className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border p-8 cursor-pointer hover:border-primary/50 transition-colors"
+                  >
+                    <div className="rounded-full bg-muted p-3">
+                      <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-foreground">Subir foto</p>
+                      <p className="text-xs text-muted-foreground">JPG, PNG hasta 5MB</p>
+                    </div>
+                    <input
+                      id="photo-upload"
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={handlePhotoChange}
+                    />
+                  </label>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full gap-2"
+                size="lg"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {isSubmitting ? 'Enviando...' : 'Enviar solicitud'}
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>
-    </AppShell>
   );
 }

@@ -7,7 +7,7 @@
  */
 
 import { useState } from 'react';
-import { useQuery, useMutation } from '@/lib/graphql/hooks';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { GET_WORK_SHIFTS, GET_TECHNICIANS, CREATE_WORK_SHIFT, DELETE_WORK_SHIFT } from '@/lib/graphql/queries';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

@@ -10,7 +10,7 @@ export { default as HomePage } from './HomePage';
 // Admin
 export { default as AdminDashboardPage } from './admin/DashboardPage';
 export { default as AdminOrdenesPage } from './admin/OrdenesPage';
-export { default as AdminOrdenDetallePage } from './admin/OrdenDetallePage';
+export { default as AdminOrdenDetallePage } from './admin/AdminOrdenDetallePage';
 export { default as AdminCrearOTPage } from './admin/CrearOTPage';
 export { default as AdminAsignarPage } from './admin/AsignarPage';
 export { default as AdminHorariosPage } from './admin/HorariosPage';
@@ -27,5 +27,5 @@ export { default as SolicitanteCrearOTPage } from './solicitante/CrearOTPage';
 export { default as SolicitanteMisOrdenesPage } from './solicitante/MisOrdenesPage';
 
 // Shared
-export { default as OrdenDetallePage } from './shared/OrdenDetallePage';
+export { default as OrdenDetallePage } from './solicitante/OrdenDetallePage';
 export { default as PerfilPage } from './shared/PerfilPage';

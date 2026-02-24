@@ -1,41 +1,33 @@
-/**
- * BB Maintenance - Shell de la aplicación
- * Contenedor principal con sidebar y header
- */
-
 'use client';
 
-import React from "react"
+import React, { useState } from "react"
 
 import { Sidebar } from './sidebar';
 import { Header } from './header';
-import { ProtectedRoute } from '@/components/protected-route';
-import type { UserRole } from '@/lib/types';
 
 interface AppShellProps {
   children: React.ReactNode;
-  title: string;
+  title?: string;
   subtitle?: string;
-  allowedRoles?: UserRole[];
 }
 
-export function AppShell({ children, title, subtitle, allowedRoles }: AppShellProps) {
+export function AppShell({ children, title, subtitle }: AppShellProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   return (
-    <ProtectedRoute allowedRoles={allowedRoles}>
       <div className="min-h-screen bg-background">
         {/* Sidebar - hidden on mobile */}
         <div className="hidden md:block">
-          <Sidebar />
+          <Sidebar isCollapsed={isCollapsed} onToggleCollapse={() => setIsCollapsed(c => !c)} />
         </div>
 
         {/* Main content */}
-        <div className="md:pl-64 transition-all duration-300">
+        <div className={`flex-1 flex flex-col transition-all duration-300 ${isCollapsed ? 'md:pl-16' : 'md:pl-64'}`}>
           <Header title={title} subtitle={subtitle} />
-          <main className="p-4 md:p-6">
+          <main className="flex-1 p-4 md:p-6 overflow-y-auto">
             {children}
           </main>
         </div>
       </div>
-    </ProtectedRoute>
   );
 }

@@ -1,51 +1,32 @@
-'use client';
-
-/**
- * BB Maintenance - Home Page
- * Redirige al usuario segun su rol usando React Router.
- */
-
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth-context';
+import { FullPageLoader } from '@/components/ui/full-page-loader';
+import { UserRole } from '@/lib/types';
 
-function HomePage() {
+const HOME_BY_ROLE: Record<string, string> = {
+  [UserRole.ADMIN]: '/admin/dashboard',
+  [UserRole.TECHNICIAN]: '/tecnico/asignaciones',
+  [UserRole.REQUESTER]: '/solicitante/mis-ordenes',
+};
+
+export default function HomePage() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const navigate = useNavigate();
+  const location = useLocation();
 
-  useEffect(() => {
-    if (isLoading) return;
+  if (isLoading) {
+    return <FullPageLoader />;
+  }
 
-    if (!isAuthenticated) {
-      navigate('/login', { replace: true });
-      return;
-    }
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
-    if (user) {
-      switch (user.role) {
-        case 'administrador':
-          navigate('/admin/dashboard', { replace: true });
-          break;
-        case 'tecnico':
-          navigate('/tecnico/asignaciones', { replace: true });
-          break;
-        case 'solicitante':
-          navigate('/solicitante/mis-ordenes', { replace: true });
-          break;
-        default:
-          navigate('/login', { replace: true });
-      }
-    }
-  }, [user, isAuthenticated, isLoading, navigate]);
+  if (!user.isActive) {
+    return <Navigate to="/403" replace />;
+  }
 
-  return (
-    <div className="flex h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
-        <p className="text-muted-foreground">Redirigiendo...</p>
-      </div>
-    </div>
-  );
+  const roleName = user.role?.name;
+  const redirectTo = roleName ? HOME_BY_ROLE[roleName] : undefined;
+
+  return <Navigate to={redirectTo ?? '/403'} replace />;
 }
-
-export default HomePage;
