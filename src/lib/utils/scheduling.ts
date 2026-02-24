@@ -1,6 +1,9 @@
-import type { ScheduleEntry, AbsenceReason, ValidationError, CellSelection } from '../types/scheduling';
+import type { ScheduleEntry, AbsenceReasonItem, ValidationError, CellSelection } from '@/components/scheduling/types';
 
-// Get week number from date (ISO 8601)
+export function normalizeDate(datetime: string): string {
+    return datetime.includes('T') ? datetime.split('T')[0] : datetime;
+}
+
 export function getWeekNumber(date: Date): { week: number; year: number } {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
     const dayNum = d.getUTCDay() || 7;
@@ -10,7 +13,6 @@ export function getWeekNumber(date: Date): { week: number; year: number } {
     return { week: weekNo, year: d.getUTCFullYear() };
 }
 
-// Get dates for a week
 export function getWeekDates(weekNumber: number, year: number): string[] {
     const simple = new Date(year, 0, 1 + (weekNumber - 1) * 7);
     const dow = simple.getDay();
@@ -27,7 +29,6 @@ export function getWeekDates(weekNumber: number, year: number): string[] {
     return dates;
 }
 
-// Format week range label
 export function formatWeekLabel(weekNumber: number, year: number): string {
     const dates = getWeekDates(weekNumber, year);
     const start = new Date(dates[0]);
@@ -35,38 +36,43 @@ export function formatWeekLabel(weekNumber: number, year: number): string {
     return `Semana ${weekNumber} - ${start.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} a ${end.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}`;
 }
 
-// Validate absence limits
 export function validateAbsenceLimits(
     schedules: ScheduleEntry[],
-    absenceReasons: AbsenceReason[],
+    absenceReasons: AbsenceReasonItem[],
     technicianId: string,
     weekDates: string[]
 ): ValidationError[] {
     const errors: ValidationError[] = [];
     const reasonMap = new Map(absenceReasons.map((r) => [r.id, r]));
 
-    // Count absences per reason for this technician this week
     const absenceCounts = new Map<string, number>();
 
     schedules
-        .filter((s) => s.technicianId === technicianId && weekDates.includes(s.scheduleDate) && s.absenceReasonId)
+        .filter(
+            (s) =>
+                s.technicianId === technicianId &&
+                weekDates.includes(normalizeDate(s.scheduleDate)) &&
+                s.absenceReasonId
+        )
         .forEach((s) => {
             const count = absenceCounts.get(s.absenceReasonId!) || 0;
             absenceCounts.set(s.absenceReasonId!, count + 1);
         });
 
-    // Check limits
     absenceCounts.forEach((count, reasonId) => {
         const reason = reasonMap.get(reasonId);
-        if (reason && reason.maxPerWeek !== null && count > reason.maxPerWeek) {
+        if (reason && reason.maxPerWeek != null && count > reason.maxPerWeek) {
             const violatingEntries = schedules.filter(
-                (s) => s.technicianId === technicianId && s.absenceReasonId === reasonId && weekDates.includes(s.scheduleDate)
+                (s) =>
+                    s.technicianId === technicianId &&
+                    s.absenceReasonId === reasonId &&
+                    weekDates.includes(normalizeDate(s.scheduleDate))
             );
 
             violatingEntries.forEach((entry) => {
                 errors.push({
                     technicianId,
-                    date: entry.scheduleDate,
+                    date: normalizeDate(entry.scheduleDate),
                     absenceReasonId: reasonId,
                     message: `${reason.name} excede el limite de ${reason.maxPerWeek} por semana`,
                     maxAllowed: reason.maxPerWeek,
@@ -79,12 +85,6 @@ export function validateAbsenceLimits(
     return errors;
 }
 
-// Check if two selections overlap
-export function selectionsOverlap(sel1: CellSelection[], sel2: CellSelection[]): boolean {
-    return sel1.some((s1) => sel2.some((s2) => s1.technicianId === s2.technicianId && s1.date === s2.date));
-}
-
-// Get selection bounds (for drag selection)
 export function getSelectionBounds(
     start: CellSelection,
     end: CellSelection,
@@ -110,7 +110,6 @@ export function getSelectionBounds(
     return selection;
 }
 
-// Generate color from string (deterministic)
 export function stringToColor(str: string): string {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -120,18 +119,15 @@ export function stringToColor(str: string): string {
     return `hsl(${h}, 65%, 50%)`;
 }
 
-// Check if cell is in selection
 export function isCellSelected(cell: CellSelection, selection: CellSelection[]): boolean {
     return selection.some((s) => s.technicianId === cell.technicianId && s.date === cell.date);
 }
 
-// Parse time string to minutes
 export function timeToMinutes(time: string): number {
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
 }
 
-// Format minutes to time string
 export function minutesToTime(minutes: number): string {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;

@@ -1,29 +1,56 @@
 declare module 'react-window' {
-    import { ComponentType, CSSProperties, ReactElement } from 'react';
+    import { Component, ComponentType, CSSProperties } from 'react';
 
-    export interface ListChildComponentProps {
+    /** Props que recibe cada fila renderizada por List v2 */
+    export interface RowComponentProps {
         index: number;
         style: CSSProperties;
-        data?: any;
+        // Más props se inyectan vía rowProps
+        [key: string]: unknown;
     }
 
-    export interface VariableSizeListProps {
-        children: ComponentType<ListChildComponentProps>;
-        height: number | string;
-        itemCount: number;
-        itemSize: (index: number) => number;
-        width: number | string;
+    /** API pública de List en react-window v2 */
+    export interface ListProps {
+        /** Componente responsable de renderizar cada fila */
+        rowComponent: ComponentType<RowComponentProps>;
+
+        /** Número total de filas */
+        rowCount: number;
+
+        /** Alto de cada fila o función que lo calcule por índice */
+        rowHeight: number | ((index: number) => number);
+
+        /**
+         * Props adicionales que se pasan a cada fila.
+         * No deben incluir: ariaAttributes, index, style.
+         */
+        rowProps?: Record<string, unknown>;
+
+        /** Alto por defecto del contenedor (en px) */
+        defaultHeight?: number;
+
+        /** Número de filas extra a renderizar fuera del viewport */
         overscanCount?: number;
-        initialScrollOffset?: number;
-        onScroll?: (props: {
-            scrollDirection: 'forward' | 'backward';
-            scrollOffset: number;
-            scrollUpdateWasRequested: boolean;
+
+        /** Clase CSS opcional del contenedor */
+        className?: string;
+
+        /** Estilos inline del contenedor (por ejemplo height/width) */
+        style?: CSSProperties;
+
+        /** Callback opcional cuando cambian tamaño/filas visibles */
+        onResize?: (size: { height: number }) => void;
+        onRowsRendered?: (info: {
+            startIndexVisible: number;
+            stopIndexVisible: number;
+            startIndexOverscan: number;
+            stopIndexOverscan: number;
         }) => void;
     }
 
-    export class VariableSizeList extends ComponentType<VariableSizeListProps> {
-        scrollTo(scrollOffset: number): void;
-        scrollToItem(index: number, align?: 'start' | 'center' | 'end' | 'smart'): void;
-    }
+    export class List extends Component<ListProps> {}
+
+    export class Grid extends Component<any> {}
+
+    export function getScrollbarSize(): number;
 }

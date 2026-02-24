@@ -1,16 +1,16 @@
 'use client';
 
 import { useRef, useCallback, memo } from 'react';
-import { VariableSizeList as List } from 'react-window';
+import { List } from 'react-window';
 import type {
-    ShiftDefinition,
-    AbsenceReason,
     ScheduleEntry,
+    ScheduleTechnician,
+    ShiftItem,
+    AbsenceReasonItem,
     CellSelection,
     ValidationError,
     GridMode,
-} from '@/lib/types/scheduling';
-import type { User } from '@/lib/types';
+} from './types';
 import { stringToColor, isCellSelected } from '@/lib/utils/scheduling';
 import { AlertCircle } from 'lucide-react';
 
@@ -20,12 +20,12 @@ const NAME_COLUMN_WIDTH = 200;
 const DAY_COLUMN_WIDTH = 140;
 
 interface ScheduleGridProps {
-    technicians: User[];
+    technicians: ScheduleTechnician[];
     weekDates: string[];
     daysOfWeek: string[];
     schedules: ScheduleEntry[];
-    shifts: ShiftDefinition[];
-    absenceReasons: AbsenceReason[];
+    shifts: ShiftItem[];
+    absenceReasons: AbsenceReasonItem[];
     selectedCells: CellSelection[];
     validationErrors: ValidationError[];
     mode: GridMode;
@@ -45,8 +45,6 @@ const ScheduleCell = memo(
         schedule,
         isSelected,
         hasError,
-        shifts,
-        absenceReasons,
         mode,
         onClick,
         onSelect,
@@ -58,33 +56,29 @@ const ScheduleCell = memo(
         schedule?: ScheduleEntry;
         isSelected: boolean;
         hasError: boolean;
-        shifts: ShiftDefinition[];
-        absenceReasons: AbsenceReason[];
         mode: GridMode;
         onClick: (technicianId: string, date: string, isShiftSelect: boolean) => void;
         onSelect: (technicianId: string, date: string, shiftKey: boolean) => void;
         onDragStart: (technicianId: string, date: string) => void;
         onDragOver: (technicianId: string, date: string) => void;
     }) => {
-        const shift = schedule?.shiftId ? shifts.find((s) => s.id === schedule.shiftId) : null;
-        const absence = schedule?.absenceReasonId
-            ? absenceReasons.find((a) => a.id === schedule.absenceReasonId)
-            : null;
+        const shift = schedule?.shift ?? null;
+        const absence = schedule?.absenceReason ?? null;
 
         const bgColor = shift
             ? stringToColor(shift.name)
             : absence
                 ? 'hsl(var(--muted))'
                 : 'transparent';
-        const textColor = shift ? 'white' : absence ? 'hsl(var(--muted-foreground))' : 'hsl(var(--muted-foreground))';
+        const textColor = shift ? 'white' : 'hsl(var(--muted-foreground))';
 
         return (
             <div
                 className={`
-          h-full border-r border-b border-border relative cursor-pointer transition-all
-          ${isSelected ? 'ring-2 ring-primary ring-inset' : ''}
-          ${hasError ? 'bg-destructive/10' : ''}
-        `}
+                h-full border-r border-b border-border relative cursor-pointer transition-all
+                ${isSelected ? 'ring-2 ring-primary ring-inset' : ''}
+                ${hasError ? 'bg-destructive/10' : ''}
+                `}
                 style={{
                     backgroundColor: isSelected ? 'hsl(var(--primary) / 0.1)' : bgColor,
                 }}
@@ -122,7 +116,7 @@ const ScheduleCell = memo(
                             </p>
                         </div>
                     )}
-                    {absence && (
+                    {absence && !shift && (
                         <div>
                             <p className="text-xs font-medium truncate" style={{ color: textColor }}>
                                 {absence.name}
@@ -147,11 +141,7 @@ export function ScheduleGrid({
     technicians,
     weekDates,
     daysOfWeek,
-    schedules,
-    shifts,
-    absenceReasons,
     selectedCells,
-    validationErrors,
     mode,
     onCellClick,
     onCellSelect,
@@ -162,41 +152,51 @@ export function ScheduleGrid({
     hasError,
 }: ScheduleGridProps) {
     const listRef = useRef<List>(null);
-    const gridWidth = NAME_COLUMN_WIDTH + DAY_COLUMN_WIDTH * 7;
 
-    const Row = useCallback(
-        ({ index, style }: { index: number; style: React.CSSProperties }) => {
-            const tech = technicians[index];
+    const RowComponent = useCallback(
+        ({
+            index,
+            style,
+            technicians,
+            weekDates,
+            daysOfWeek,
+            selectedCells,
+            mode,
+            onCellClick,
+            onCellSelect,
+            onDragStart,
+            onDragOver,
+            getSchedule,
+            hasError,
+        }: any) => {
+            const tech: ScheduleTechnician = technicians[index];
+            const techUserId = tech.user.id;
 
             return (
                 <div style={style} className="flex border-b border-border">
-                    {/* Sticky Name Column */}
                     <div
                         className="sticky left-0 bg-card border-r border-border flex items-center px-3 z-10"
                         style={{ width: NAME_COLUMN_WIDTH, minWidth: NAME_COLUMN_WIDTH }}
                     >
                         <div className="truncate">
-                            <p className="text-sm font-medium text-foreground truncate">{tech.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{tech.department}</p>
+                            <p className="text-sm font-medium text-foreground truncate">{tech.user.fullName}</p>
+                            <p className="text-xs text-muted-foreground truncate">{tech.position.name}</p>
                         </div>
                     </div>
 
-                    {/* Day Columns */}
-                    {weekDates.map((date) => {
-                        const schedule = getSchedule(tech.id, date);
-                        const isSelected = isCellSelected({ technicianId: tech.id, date }, selectedCells);
-                        const cellHasError = hasError(tech.id, date);
+                    {weekDates.map((date: string) => {
+                        const schedule = getSchedule(techUserId, date);
+                        const isSelected = isCellSelected({ technicianId: techUserId, date }, selectedCells);
+                        const cellHasError = hasError(techUserId, date);
 
                         return (
                             <div key={date} style={{ width: DAY_COLUMN_WIDTH, minWidth: DAY_COLUMN_WIDTH }}>
                                 <ScheduleCell
-                                    technicianId={tech.id}
+                                    technicianId={techUserId}
                                     date={date}
                                     schedule={schedule}
                                     isSelected={isSelected}
                                     hasError={cellHasError}
-                                    shifts={shifts}
-                                    absenceReasons={absenceReasons}
                                     mode={mode}
                                     onClick={onCellClick}
                                     onSelect={onCellSelect}
@@ -209,20 +209,7 @@ export function ScheduleGrid({
                 </div>
             );
         },
-        [
-            technicians,
-            weekDates,
-            shifts,
-            absenceReasons,
-            selectedCells,
-            mode,
-            onCellClick,
-            onCellSelect,
-            onDragStart,
-            onDragOver,
-            getSchedule,
-            hasError,
-        ]
+        []
     );
 
     return (
@@ -231,10 +218,8 @@ export function ScheduleGrid({
             onMouseUp={onDragEnd}
             onMouseLeave={onDragEnd}
         >
-            {/* Header */}
             <div className="sticky top-0 z-20 bg-muted border-b border-border">
                 <div className="flex" style={{ height: HEADER_HEIGHT }}>
-                    {/* Name Header */}
                     <div
                         className="sticky left-0 bg-muted border-r border-border flex items-center px-3 z-10"
                         style={{ width: NAME_COLUMN_WIDTH, minWidth: NAME_COLUMN_WIDTH }}
@@ -242,7 +227,6 @@ export function ScheduleGrid({
                         <p className="text-sm font-semibold text-foreground">Tecnico</p>
                     </div>
 
-                    {/* Day Headers */}
                     {weekDates.map((date, idx) => {
                         const dateObj = new Date(date);
                         const isToday = date === new Date().toISOString().split('T')[0];
@@ -264,17 +248,28 @@ export function ScheduleGrid({
                 </div>
             </div>
 
-            {/* Virtualized Rows */}
             <List
-                ref={listRef}
-                height={600}
-                itemCount={technicians.length}
-                itemSize={() => ROW_HEIGHT}
-                width="100%"
+                rowComponent={RowComponent}
+                rowCount={technicians.length}
+                rowHeight={ROW_HEIGHT}
+                rowProps={{
+                    technicians,
+                    weekDates,
+                    daysOfWeek,
+                    selectedCells,
+                    mode,
+                    onCellClick,
+                    onCellSelect,
+                    onDragStart,
+                    onDragOver,
+                    getSchedule,
+                    hasError,
+                }}
+                defaultHeight={600}
                 overscanCount={5}
-            >
-                {Row}
-            </List>
+                style={{ width: '100%' }}
+                ref={listRef as any}
+            />
         </div>
     );
 }

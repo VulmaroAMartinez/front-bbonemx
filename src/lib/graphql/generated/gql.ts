@@ -37,6 +37,15 @@ type Documents = {
     "\n  \n  query MyNotifications($limit: Int, $page: Int, $unreadOnly: Boolean) {\n    myNotifications(\n      pagination: { limit: $limit, page: $page }\n      filters: { unreadOnly: $unreadOnly }\n    ) {\n      data {\n        ...NotificationItem\n      }\n      unreadCount\n      total\n      totalPages\n    }\n  }\n": typeof types.MyNotificationsDocument,
     "\n  mutation MarkNotificationAsRead($id: ID!) {\n    markNotificationAsRead(id: $id) {\n      id\n      readAt\n    }\n  }\n": typeof types.MarkNotificationAsReadDocument,
     "\n  mutation MarkAllNotificationsAsRead {\n    markAllNotificationsAsRead\n  }\n": typeof types.MarkAllNotificationsAsReadDocument,
+    "\n  fragment ScheduleItem on TechnicianSchedule {\n    id\n    technicianId\n    shiftId\n    absenceReasonId\n    scheduleDate\n    weekNumber\n    year\n    notes\n    isActive\n    shift {\n      id\n      name\n      startTime\n      endTime\n    }\n    absenceReason {\n      id\n      name\n      isActive\n      maxPerWeek\n    }\n    technician {\n      id\n      fullName\n    }\n  }\n": typeof types.ScheduleItemFragmentDoc,
+    "\n  \n  query GetWeekSchedule($weekNumber: Int!, $year: Int!) {\n    weekSchedule(weekNumber: $weekNumber, year: $year) {\n      weekNumber\n      year\n      totalAssignments\n      totalAbsences\n      totalWorkDays\n      schedules {\n        ...ScheduleItem\n      }\n    }\n  }\n": typeof types.GetWeekScheduleDocument,
+    "\n  query GetScheduleTechnicians {\n    techniciansActive {\n      id\n      user {\n        id\n        fullName\n        employeeNumber\n      }\n      position {\n        name\n      }\n    }\n  }\n": typeof types.GetScheduleTechniciansDocument,
+    "\n  query GetAbsenceReasonsActive {\n    absenceReasonsActive {\n      id\n      name\n      isActive\n      maxPerWeek\n    }\n  }\n": typeof types.GetAbsenceReasonsActiveDocument,
+    "\n  \n  mutation AssignWeekSchedule($input: AssignWeekScheduleInput!) {\n    assignWeekSchedule(input: $input) {\n      ...ScheduleItem\n    }\n  }\n": typeof types.AssignWeekScheduleDocument,
+    "\n  \n  mutation CreateTechnicianSchedule($input: CreateScheduleInput!) {\n    createTechnicianSchedule(input: $input) {\n      ...ScheduleItem\n    }\n  }\n": typeof types.CreateTechnicianScheduleDocument,
+    "\n  \n  mutation UpdateTechnicianSchedule($id: ID!, $input: UpdateScheduleInput!) {\n    updateTechnicianSchedule(id: $id, input: $input) {\n      ...ScheduleItem\n    }\n  }\n": typeof types.UpdateTechnicianScheduleDocument,
+    "\n  mutation DeleteTechnicianSchedule($id: ID!) {\n    deleteTechnicianSchedule(id: $id)\n  }\n": typeof types.DeleteTechnicianScheduleDocument,
+    "\n  \n  mutation CopyWeekSchedules($input: CopyWeekSchedulesInput!) {\n    copyWeekSchedules(input: $input) {\n      ...ScheduleItem\n    }\n  }\n": typeof types.CopyWeekSchedulesDocument,
     "\n  \n  \n  \n  \n  fragment WorkOrderItem on WorkOrder {\n    id\n    folio\n    description\n    status\n    priority\n    maintenanceType\n    stopType\n    assignedShiftId\n    machineId\n    createdAt\n    isFullySigned\n    area {\n      ...AreaBasic\n    }\n    subArea {\n      ...SubAreaBasic\n    }\n    machine {\n      ...MachineBasic\n    }\n    requester {\n      ...UserBasic\n    }\n    technicians {\n      isLead\n      technician {\n        ...UserBasic\n      }\n    }\n  }\n": typeof types.WorkOrderItemFragmentDoc,
     "\n  \n  query MyRequestedWorkOrders {\n    myRequestedWorkOrders {\n      ...WorkOrderItem\n    }\n  }\n": typeof types.MyRequestedWorkOrdersDocument,
     "\n  \n  query MyAssignedWorkOrders {\n    myAssignedWorkOrders {\n      ...WorkOrderItem\n    }\n  }\n": typeof types.MyAssignedWorkOrdersDocument,
@@ -77,6 +86,15 @@ const documents: Documents = {
     "\n  \n  query MyNotifications($limit: Int, $page: Int, $unreadOnly: Boolean) {\n    myNotifications(\n      pagination: { limit: $limit, page: $page }\n      filters: { unreadOnly: $unreadOnly }\n    ) {\n      data {\n        ...NotificationItem\n      }\n      unreadCount\n      total\n      totalPages\n    }\n  }\n": types.MyNotificationsDocument,
     "\n  mutation MarkNotificationAsRead($id: ID!) {\n    markNotificationAsRead(id: $id) {\n      id\n      readAt\n    }\n  }\n": types.MarkNotificationAsReadDocument,
     "\n  mutation MarkAllNotificationsAsRead {\n    markAllNotificationsAsRead\n  }\n": types.MarkAllNotificationsAsReadDocument,
+    "\n  fragment ScheduleItem on TechnicianSchedule {\n    id\n    technicianId\n    shiftId\n    absenceReasonId\n    scheduleDate\n    weekNumber\n    year\n    notes\n    isActive\n    shift {\n      id\n      name\n      startTime\n      endTime\n    }\n    absenceReason {\n      id\n      name\n      isActive\n      maxPerWeek\n    }\n    technician {\n      id\n      fullName\n    }\n  }\n": types.ScheduleItemFragmentDoc,
+    "\n  \n  query GetWeekSchedule($weekNumber: Int!, $year: Int!) {\n    weekSchedule(weekNumber: $weekNumber, year: $year) {\n      weekNumber\n      year\n      totalAssignments\n      totalAbsences\n      totalWorkDays\n      schedules {\n        ...ScheduleItem\n      }\n    }\n  }\n": types.GetWeekScheduleDocument,
+    "\n  query GetScheduleTechnicians {\n    techniciansActive {\n      id\n      user {\n        id\n        fullName\n        employeeNumber\n      }\n      position {\n        name\n      }\n    }\n  }\n": types.GetScheduleTechniciansDocument,
+    "\n  query GetAbsenceReasonsActive {\n    absenceReasonsActive {\n      id\n      name\n      isActive\n      maxPerWeek\n    }\n  }\n": types.GetAbsenceReasonsActiveDocument,
+    "\n  \n  mutation AssignWeekSchedule($input: AssignWeekScheduleInput!) {\n    assignWeekSchedule(input: $input) {\n      ...ScheduleItem\n    }\n  }\n": types.AssignWeekScheduleDocument,
+    "\n  \n  mutation CreateTechnicianSchedule($input: CreateScheduleInput!) {\n    createTechnicianSchedule(input: $input) {\n      ...ScheduleItem\n    }\n  }\n": types.CreateTechnicianScheduleDocument,
+    "\n  \n  mutation UpdateTechnicianSchedule($id: ID!, $input: UpdateScheduleInput!) {\n    updateTechnicianSchedule(id: $id, input: $input) {\n      ...ScheduleItem\n    }\n  }\n": types.UpdateTechnicianScheduleDocument,
+    "\n  mutation DeleteTechnicianSchedule($id: ID!) {\n    deleteTechnicianSchedule(id: $id)\n  }\n": types.DeleteTechnicianScheduleDocument,
+    "\n  \n  mutation CopyWeekSchedules($input: CopyWeekSchedulesInput!) {\n    copyWeekSchedules(input: $input) {\n      ...ScheduleItem\n    }\n  }\n": types.CopyWeekSchedulesDocument,
     "\n  \n  \n  \n  \n  fragment WorkOrderItem on WorkOrder {\n    id\n    folio\n    description\n    status\n    priority\n    maintenanceType\n    stopType\n    assignedShiftId\n    machineId\n    createdAt\n    isFullySigned\n    area {\n      ...AreaBasic\n    }\n    subArea {\n      ...SubAreaBasic\n    }\n    machine {\n      ...MachineBasic\n    }\n    requester {\n      ...UserBasic\n    }\n    technicians {\n      isLead\n      technician {\n        ...UserBasic\n      }\n    }\n  }\n": types.WorkOrderItemFragmentDoc,
     "\n  \n  query MyRequestedWorkOrders {\n    myRequestedWorkOrders {\n      ...WorkOrderItem\n    }\n  }\n": types.MyRequestedWorkOrdersDocument,
     "\n  \n  query MyAssignedWorkOrders {\n    myAssignedWorkOrders {\n      ...WorkOrderItem\n    }\n  }\n": types.MyAssignedWorkOrdersDocument,
@@ -200,6 +218,42 @@ export function gql(source: "\n  mutation MarkNotificationAsRead($id: ID!) {\n  
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  mutation MarkAllNotificationsAsRead {\n    markAllNotificationsAsRead\n  }\n"): (typeof documents)["\n  mutation MarkAllNotificationsAsRead {\n    markAllNotificationsAsRead\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  fragment ScheduleItem on TechnicianSchedule {\n    id\n    technicianId\n    shiftId\n    absenceReasonId\n    scheduleDate\n    weekNumber\n    year\n    notes\n    isActive\n    shift {\n      id\n      name\n      startTime\n      endTime\n    }\n    absenceReason {\n      id\n      name\n      isActive\n      maxPerWeek\n    }\n    technician {\n      id\n      fullName\n    }\n  }\n"): (typeof documents)["\n  fragment ScheduleItem on TechnicianSchedule {\n    id\n    technicianId\n    shiftId\n    absenceReasonId\n    scheduleDate\n    weekNumber\n    year\n    notes\n    isActive\n    shift {\n      id\n      name\n      startTime\n      endTime\n    }\n    absenceReason {\n      id\n      name\n      isActive\n      maxPerWeek\n    }\n    technician {\n      id\n      fullName\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  \n  query GetWeekSchedule($weekNumber: Int!, $year: Int!) {\n    weekSchedule(weekNumber: $weekNumber, year: $year) {\n      weekNumber\n      year\n      totalAssignments\n      totalAbsences\n      totalWorkDays\n      schedules {\n        ...ScheduleItem\n      }\n    }\n  }\n"): (typeof documents)["\n  \n  query GetWeekSchedule($weekNumber: Int!, $year: Int!) {\n    weekSchedule(weekNumber: $weekNumber, year: $year) {\n      weekNumber\n      year\n      totalAssignments\n      totalAbsences\n      totalWorkDays\n      schedules {\n        ...ScheduleItem\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetScheduleTechnicians {\n    techniciansActive {\n      id\n      user {\n        id\n        fullName\n        employeeNumber\n      }\n      position {\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetScheduleTechnicians {\n    techniciansActive {\n      id\n      user {\n        id\n        fullName\n        employeeNumber\n      }\n      position {\n        name\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetAbsenceReasonsActive {\n    absenceReasonsActive {\n      id\n      name\n      isActive\n      maxPerWeek\n    }\n  }\n"): (typeof documents)["\n  query GetAbsenceReasonsActive {\n    absenceReasonsActive {\n      id\n      name\n      isActive\n      maxPerWeek\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  \n  mutation AssignWeekSchedule($input: AssignWeekScheduleInput!) {\n    assignWeekSchedule(input: $input) {\n      ...ScheduleItem\n    }\n  }\n"): (typeof documents)["\n  \n  mutation AssignWeekSchedule($input: AssignWeekScheduleInput!) {\n    assignWeekSchedule(input: $input) {\n      ...ScheduleItem\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  \n  mutation CreateTechnicianSchedule($input: CreateScheduleInput!) {\n    createTechnicianSchedule(input: $input) {\n      ...ScheduleItem\n    }\n  }\n"): (typeof documents)["\n  \n  mutation CreateTechnicianSchedule($input: CreateScheduleInput!) {\n    createTechnicianSchedule(input: $input) {\n      ...ScheduleItem\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  \n  mutation UpdateTechnicianSchedule($id: ID!, $input: UpdateScheduleInput!) {\n    updateTechnicianSchedule(id: $id, input: $input) {\n      ...ScheduleItem\n    }\n  }\n"): (typeof documents)["\n  \n  mutation UpdateTechnicianSchedule($id: ID!, $input: UpdateScheduleInput!) {\n    updateTechnicianSchedule(id: $id, input: $input) {\n      ...ScheduleItem\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation DeleteTechnicianSchedule($id: ID!) {\n    deleteTechnicianSchedule(id: $id)\n  }\n"): (typeof documents)["\n  mutation DeleteTechnicianSchedule($id: ID!) {\n    deleteTechnicianSchedule(id: $id)\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  \n  mutation CopyWeekSchedules($input: CopyWeekSchedulesInput!) {\n    copyWeekSchedules(input: $input) {\n      ...ScheduleItem\n    }\n  }\n"): (typeof documents)["\n  \n  mutation CopyWeekSchedules($input: CopyWeekSchedulesInput!) {\n    copyWeekSchedules(input: $input) {\n      ...ScheduleItem\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

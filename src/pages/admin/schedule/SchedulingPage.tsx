@@ -1,60 +1,43 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { useQuery, useMutation } from '@/lib/graphql/hooks';
-import { GET_TECHNICIANS } from '@/lib/graphql/queries';
+import { useState, useCallback, useMemo } from 'react';
+import { useQuery, useMutation } from '@apollo/client/react';
 import {
-    GET_SHIFT_DEFINITIONS,
-    GET_ABSENCE_REASONS,
-    GET_WEEK_SCHEDULES,
-    BULK_ASSIGN_SCHEDULES,
-    COPY_WEEK_SCHEDULES,
-    CLEAR_SCHEDULES,
-} from '@/lib/graphql/scheduling-queries';
+    GetWeekScheduleDocument,
+    GetScheduleTechniciansDocument,
+    GetShiftsDocument,
+    GetAbsenceReasonsActiveDocument,
+    AssignWeekScheduleDocument,
+    CopyWeekSchedulesDocument,
+    ScheduleItemFragmentDoc,
+} from '@/lib/graphql/generated/graphql';
+import { useFragment } from '@/lib/graphql/generated/fragment-masking';
+import type {
+    CellSelection,
+    GridMode,
+    ValidationError,
+    WeeklyTemplate,
+    ScheduleEntry,
+} from '@/components/scheduling/types';
 import {
     getWeekNumber,
     getWeekDates,
     formatWeekLabel,
     validateAbsenceLimits,
     getSelectionBounds,
-    isCellSelected,
-    stringToColor,
+    normalizeDate,
 } from '@/lib/utils/scheduling';
-import type {
-    ShiftDefinition,
-    AbsenceReason,
-    ScheduleEntry,
-    CellSelection,
-    GridMode,
-    ScheduleFilter,
-    WeeklyTemplate,
-    ScheduleAction,
-    ValidationError,
-} from '@/lib/types/scheduling';
-import type { User } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
     Calendar,
     ChevronLeft,
     ChevronRight,
     Copy,
-    Save,
     Edit3,
     Search,
     Filter,
     AlertCircle,
     CheckCircle,
-    X,
-    Undo,
     Layers,
 } from 'lucide-react';
 import { ScheduleGrid } from '@/components/scheduling/ScheduleGrid';
@@ -64,7 +47,6 @@ import { CellSelector } from '@/components/scheduling/CellSelector';
 
 const DAYS_OF_WEEK = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
 
-// Predefined templates
 const DEFAULT_TEMPLATES: WeeklyTemplate[] = [
     {
         id: 'mon-fri-shift1',
@@ -108,72 +90,87 @@ function EnterpriseSchedulingPage() {
     const [weekNumber, setWeekNumber] = useState(currentWeekNum);
     const [year, setYear] = useState(currentYear);
     const [mode, setMode] = useState<GridMode>('edit');
-    const [filter, setFilter] = useState<ScheduleFilter>({});
     const [showFilters, setShowFilters] = useState(false);
     const [showTemplates, setShowTemplates] = useState(false);
     const [selectedCells, setSelectedCells] = useState<CellSelection[]>([]);
     const [dragStart, setDragStart] = useState<CellSelection | null>(null);
     const [activeCellSelector, setActiveCellSelector] = useState<CellSelection | null>(null);
-    const [undoStack, setUndoStack] = useState<ScheduleAction[]>([]);
-    const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
     const weekDates = useMemo(() => getWeekDates(weekNumber, year), [weekNumber, year]);
     const weekLabel = useMemo(() => formatWeekLabel(weekNumber, year), [weekNumber, year]);
 
-    // Queries
-    const { data: techData, loading: techLoading } = useQuery<{ technicians: User[] }>(GET_TECHNICIANS);
-    const { data: shiftsData, loading: shiftsLoading } = useQuery<{ shifts: ShiftDefinition[] }>(
-        GET_SHIFT_DEFINITIONS
-    );
-    const { data: absencesData, loading: absencesLoading } = useQuery<{ absenceReasons: AbsenceReason[] }>(
-        GET_ABSENCE_REASONS
-    );
+    // --- Queries ---
+    const { data: techData, loading: techLoading } = useQuery(GetScheduleTechniciansDocument);
+    const { data: shiftsData, loading: shiftsLoading } = useQuery(GetShiftsDocument);
+    const { data: absencesData, loading: absencesLoading } = useQuery(GetAbsenceReasonsActiveDocument);
     const {
         data: schedulesData,
         loading: schedulesLoading,
         refetch,
-    } = useQuery<{ weekSchedules: ScheduleEntry[] }>(GET_WEEK_SCHEDULES, {
+    } = useQuery(GetWeekScheduleDocument, {
         variables: { weekNumber, year },
     });
 
-    // Mutations
-    const [bulkAssign, { loading: saving }] = useMutation(BULK_ASSIGN_SCHEDULES);
-    const [copyWeek, { loading: copying }] = useMutation(COPY_WEEK_SCHEDULES);
-    const [clearSchedules] = useMutation(CLEAR_SCHEDULES);
+    // --- Mutations ---
+    const [assignWeekSchedule, { loading: saving }] = useMutation(AssignWeekScheduleDocument);
+    const [copyWeek, { loading: copying }] = useMutation(CopyWeekSchedulesDocument);
 
-    const technicians = techData?.technicians || [];
-    const shifts = shiftsData?.shifts || [];
-    const absenceReasons = absencesData?.absenceReasons || [];
-    const schedules = schedulesData?.weekSchedules || [];
+    // --- Derived data ---
+    const technicians = techData?.techniciansActive ?? [];
+    const shifts = shiftsData?.shiftsActive ?? [];
+    const absenceReasons = absencesData?.absenceReasonsActive ?? [];
+
+    const rawSchedules = useFragment(
+        ScheduleItemFragmentDoc,
+        schedulesData?.weekSchedule?.schedules ?? []
+    );
+
+    const schedules: ScheduleEntry[] = useMemo(
+        () => rawSchedules.map((s) => ({ ...s })),
+        [rawSchedules]
+    );
+
+    const techUserIds = useMemo(
+        () => technicians.map((t) => t.user.id),
+        [technicians]
+    );
 
     const isLoading = techLoading || shiftsLoading || absencesLoading || schedulesLoading;
 
-    // Validate schedules
-    useEffect(() => {
-        if (schedules.length > 0 && absenceReasons.length > 0) {
-            const errors: ValidationError[] = [];
-            technicians.forEach((tech) => {
-                const techErrors = validateAbsenceLimits(schedules, absenceReasons, tech.id, weekDates);
-                errors.push(...techErrors);
-            });
-            setValidationErrors(errors);
-        }
-    }, [schedules, absenceReasons, technicians, weekDates]);
+    // --- Validation (derivada, sin estado local) ---
+    const validationErrors: ValidationError[] = useMemo(() => {
+        if (schedules.length === 0 || absenceReasons.length === 0) return [];
 
-    // Week navigation
-    const navigateWeek = useCallback((direction: number) => {
-        const d = new Date();
-        d.setFullYear(year);
-        d.setDate(d.getDate() + direction * 7);
-        const { week, year: newYear } = getWeekNumber(d);
-        setWeekNumber(week);
-        setYear(newYear);
-        setSelectedCells([]);
-        setHasUnsavedChanges(false);
-    }, [year]);
+        const errors: ValidationError[] = [];
+        techUserIds.forEach((userId) => {
+            const techErrors = validateAbsenceLimits(schedules, absenceReasons, userId, weekDates);
+            errors.push(...techErrors);
+        });
+        return errors;
+    }, [schedules, absenceReasons, techUserIds, weekDates]);
 
-    // Copy previous week
+    // --- Week navigation ---
+    const navigateWeek = useCallback(
+        (direction: number) => {
+            let newWeek = weekNumber + direction;
+            let newYear = year;
+            if (newWeek < 1) {
+                newYear -= 1;
+                newWeek = 52;
+            } else if (newWeek > 52) {
+                newYear += 1;
+                newWeek = 1;
+            }
+            setWeekNumber(newWeek);
+            setYear(newYear);
+            setSelectedCells([]);
+            setHasUnsavedChanges(false);
+        },
+        [weekNumber, year]
+    );
+
+    // --- Copy previous week ---
     const handleCopyPreviousWeek = useCallback(async () => {
         const prevWeek = weekNumber - 1;
         const prevYear = prevWeek < 1 ? year - 1 : year;
@@ -192,11 +189,58 @@ function EnterpriseSchedulingPage() {
             });
             refetch();
         } catch (error) {
-            console.error('[v0] Error copying week:', error);
+            console.error('Error copying week:', error);
         }
     }, [weekNumber, year, copyWeek, refetch]);
 
-    // Cell click handler
+    // --- Helpers ---
+    const getSchedule = useCallback(
+        (technicianId: string, date: string): ScheduleEntry | undefined => {
+            return schedules.find(
+                (s) => s.technicianId === technicianId && normalizeDate(s.scheduleDate) === date
+            );
+        },
+        [schedules]
+    );
+
+    const hasError = useCallback(
+        (technicianId: string, date: string): boolean => {
+            return validationErrors.some((e) => e.technicianId === technicianId && e.date === date);
+        },
+        [validationErrors]
+    );
+
+    const buildMergedWeekDays = useCallback(
+        (techId: string, overrides: Map<string, { shiftId: string | null; absenceReasonId: string | null }>) => {
+            const techSchedules = schedules.filter((s) => s.technicianId === techId);
+
+            return weekDates
+                .map((date) => {
+                    const override = overrides.get(date);
+                    const existing = techSchedules.find((s) => normalizeDate(s.scheduleDate) === date);
+
+                    if (override) {
+                        return {
+                            scheduleDate: date,
+                            shiftId: override.shiftId ?? undefined,
+                            absenceReasonId: override.absenceReasonId ?? undefined,
+                        };
+                    }
+                    if (existing) {
+                        return {
+                            scheduleDate: date,
+                            shiftId: existing.shiftId ?? undefined,
+                            absenceReasonId: existing.absenceReasonId ?? undefined,
+                        };
+                    }
+                    return null;
+                })
+                .filter((d): d is NonNullable<typeof d> => d !== null);
+        },
+        [schedules, weekDates]
+    );
+
+    // --- Cell interactions ---
     const handleCellClick = useCallback(
         (technicianId: string, date: string, isShiftSelect: boolean) => {
             if (mode === 'edit' && isShiftSelect) {
@@ -206,7 +250,6 @@ function EnterpriseSchedulingPage() {
         [mode]
     );
 
-    // Cell selection (Shift + click)
     const handleCellSelect = useCallback(
         (technicianId: string, date: string, shiftKey: boolean) => {
             if (mode !== 'edit') return;
@@ -218,16 +261,14 @@ function EnterpriseSchedulingPage() {
                     setSelectedCells([{ technicianId, date }]);
                 } else {
                     const lastSelected = selectedCells[selectedCells.length - 1];
-                    const techIds = technicians.map((t) => t.id);
-                    const bounds = getSelectionBounds(lastSelected, { technicianId, date }, techIds, weekDates);
+                    const bounds = getSelectionBounds(lastSelected, { technicianId, date }, techUserIds, weekDates);
                     setSelectedCells(bounds);
                 }
             }
         },
-        [mode, selectedCells, technicians, weekDates]
+        [mode, selectedCells, techUserIds, weekDates]
     );
 
-    // Drag selection
     const handleDragStart = useCallback(
         (technicianId: string, date: string) => {
             if (mode === 'edit') {
@@ -241,136 +282,148 @@ function EnterpriseSchedulingPage() {
     const handleDragOver = useCallback(
         (technicianId: string, date: string) => {
             if (dragStart && mode === 'edit') {
-                const techIds = technicians.map((t) => t.id);
-                const bounds = getSelectionBounds(dragStart, { technicianId, date }, techIds, weekDates);
+                const bounds = getSelectionBounds(dragStart, { technicianId, date }, techUserIds, weekDates);
                 setSelectedCells(bounds);
             }
         },
-        [dragStart, mode, technicians, weekDates]
+        [dragStart, mode, techUserIds, weekDates]
     );
 
     const handleDragEnd = useCallback(() => {
         setDragStart(null);
     }, []);
 
-    // Assign shift/absence to selected cells
+    // --- Assign shift/absence to selected cells ---
     const handleBulkAssign = useCallback(
         async (type: 'shift' | 'absence', id: string) => {
             if (selectedCells.length === 0) return;
 
-            const inputs = selectedCells.map((cell) => ({
-                technicianId: cell.technicianId,
-                scheduleDate: cell.date,
-                shiftId: type === 'shift' ? id : null,
-                absenceReasonId: type === 'absence' ? id : null,
-            }));
+            const byTechnician = new Map<string, string[]>();
+            selectedCells.forEach((cell) => {
+                if (!byTechnician.has(cell.technicianId)) byTechnician.set(cell.technicianId, []);
+                byTechnician.get(cell.technicianId)!.push(cell.date);
+            });
 
             try {
-                await bulkAssign({ variables: { inputs } });
+                for (const [techId, selectedDates] of byTechnician) {
+                    const overrides = new Map<string, { shiftId: string | null; absenceReasonId: string | null }>();
+                    selectedDates.forEach((date) => {
+                        overrides.set(date, {
+                            shiftId: type === 'shift' ? id : null,
+                            absenceReasonId: type === 'absence' ? id : null,
+                        });
+                    });
+
+                    const days = buildMergedWeekDays(techId, overrides);
+                    await assignWeekSchedule({
+                        variables: { input: { technicianId: techId, weekNumber, year, days } },
+                    });
+                }
                 setHasUnsavedChanges(true);
                 refetch();
                 setSelectedCells([]);
             } catch (error) {
-                console.error('[v0] Error bulk assigning:', error);
+                console.error('Error bulk assigning:', error);
             }
         },
-        [selectedCells, bulkAssign, refetch]
+        [selectedCells, buildMergedWeekDays, assignWeekSchedule, weekNumber, year, refetch]
     );
 
-    // Clear selected cells
+    // --- Clear selected cells ---
     const handleClearSelection = useCallback(async () => {
         if (selectedCells.length === 0) return;
 
-        const grouped = new Map<string, string[]>();
+        const byTechnician = new Map<string, string[]>();
         selectedCells.forEach((cell) => {
-            if (!grouped.has(cell.technicianId)) grouped.set(cell.technicianId, []);
-            grouped.get(cell.technicianId)!.push(cell.date);
+            if (!byTechnician.has(cell.technicianId)) byTechnician.set(cell.technicianId, []);
+            byTechnician.get(cell.technicianId)!.push(cell.date);
         });
 
         try {
-            for (const [techId, dates] of grouped) {
-                await clearSchedules({ variables: { technicianId: techId, dates } });
+            for (const [techId, clearDates] of byTechnician) {
+                const techSchedules = schedules.filter((s) => s.technicianId === techId);
+                const days = weekDates
+                    .map((date) => {
+                        if (clearDates.includes(date)) return null;
+                        const existing = techSchedules.find((s) => normalizeDate(s.scheduleDate) === date);
+                        if (existing) {
+                            return {
+                                scheduleDate: date,
+                                shiftId: existing.shiftId ?? undefined,
+                                absenceReasonId: existing.absenceReasonId ?? undefined,
+                            };
+                        }
+                        return null;
+                    })
+                    .filter((d): d is NonNullable<typeof d> => d !== null);
+
+                await assignWeekSchedule({
+                    variables: { input: { technicianId: techId, weekNumber, year, days } },
+                });
             }
             setHasUnsavedChanges(true);
             refetch();
             setSelectedCells([]);
         } catch (error) {
-            console.error('[v0] Error clearing schedules:', error);
+            console.error('Error clearing schedules:', error);
         }
-    }, [selectedCells, clearSchedules, refetch]);
+    }, [selectedCells, schedules, weekDates, assignWeekSchedule, weekNumber, year, refetch]);
 
-    // Apply template
+    // --- Apply template ---
     const handleApplyTemplate = useCallback(
         async (template: WeeklyTemplate) => {
             if (selectedCells.length === 0) return;
 
             const techIds = Array.from(new Set(selectedCells.map((c) => c.technicianId)));
-            const inputs: any[] = [];
-
-            techIds.forEach((techId) => {
-                template.pattern.forEach((day) => {
-                    const dateIdx = day.dayOfWeek - 1;
-                    const date = weekDates[dateIdx];
-                    inputs.push({
-                        technicianId: techId,
-                        scheduleDate: date,
-                        shiftId: day.shiftId || null,
-                        absenceReasonId: day.absenceReasonId || null,
-                    });
-                });
-            });
 
             try {
-                await bulkAssign({ variables: { inputs } });
+                for (const techId of techIds) {
+                    const days = template.pattern.map((day) => ({
+                        scheduleDate: weekDates[day.dayOfWeek - 1],
+                        shiftId: day.shiftId ?? undefined,
+                        absenceReasonId: day.absenceReasonId ?? undefined,
+                    }));
+
+                    await assignWeekSchedule({
+                        variables: { input: { technicianId: techId, weekNumber, year, days } },
+                    });
+                }
                 setHasUnsavedChanges(true);
                 refetch();
                 setSelectedCells([]);
                 setShowTemplates(false);
             } catch (error) {
-                console.error('[v0] Error applying template:', error);
+                console.error('Error applying template:', error);
             }
         },
-        [selectedCells, weekDates, bulkAssign, refetch]
+        [selectedCells, weekDates, assignWeekSchedule, weekNumber, year, refetch]
     );
 
-    // Cell selector dialog
+    // --- Single cell selector ---
     const handleSelectAssignment = useCallback(
         async (type: 'shift' | 'absence', id: string) => {
             if (!activeCellSelector) return;
+            const { technicianId, date } = activeCellSelector;
 
-            const input = {
-                technicianId: activeCellSelector.technicianId,
-                scheduleDate: activeCellSelector.date,
+            const overrides = new Map<string, { shiftId: string | null; absenceReasonId: string | null }>();
+            overrides.set(date, {
                 shiftId: type === 'shift' ? id : null,
                 absenceReasonId: type === 'absence' ? id : null,
-            };
+            });
 
             try {
-                await bulkAssign({ variables: { inputs: [input] } });
+                const days = buildMergedWeekDays(technicianId, overrides);
+                await assignWeekSchedule({
+                    variables: { input: { technicianId, weekNumber, year, days } },
+                });
                 setHasUnsavedChanges(true);
                 refetch();
                 setActiveCellSelector(null);
             } catch (error) {
-                console.error('[v0] Error assigning:', error);
+                console.error('Error assigning:', error);
             }
         },
-        [activeCellSelector, bulkAssign, refetch]
-    );
-
-    // Get schedule entry for cell
-    const getSchedule = useCallback(
-        (technicianId: string, date: string): ScheduleEntry | undefined => {
-            return schedules.find((s) => s.technicianId === technicianId && s.scheduleDate === date);
-        },
-        [schedules]
-    );
-
-    // Check if cell has error
-    const hasError = useCallback(
-        (technicianId: string, date: string): boolean => {
-            return validationErrors.some((e) => e.technicianId === technicianId && e.date === date);
-        },
-        [validationErrors]
+        [activeCellSelector, buildMergedWeekDays, assignWeekSchedule, weekNumber, year, refetch]
     );
 
     const conflictCount = validationErrors.length;
@@ -392,7 +445,6 @@ function EnterpriseSchedulingPage() {
             <Card className="bg-card border-border">
                 <CardContent className="py-4">
                     <div className="flex flex-wrap items-center justify-between gap-4">
-                        {/* Week Navigation */}
                         <div className="flex items-center gap-2">
                             <Button variant="outline" size="icon" onClick={() => navigateWeek(-1)} className="bg-transparent">
                                 <ChevronLeft className="h-4 w-4" />
@@ -406,7 +458,6 @@ function EnterpriseSchedulingPage() {
                             </Button>
                         </div>
 
-                        {/* Actions */}
                         <div className="flex items-center gap-2">
                             <Button variant="outline" onClick={handleCopyPreviousWeek} disabled={copying} className="bg-transparent">
                                 <Copy className="mr-2 h-4 w-4" />

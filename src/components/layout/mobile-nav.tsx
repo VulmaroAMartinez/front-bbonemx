@@ -61,7 +61,7 @@ export function MobileNav({ onClose }: MobileNavProps) {
           icon: Users,
           children: [
             { href: '/admin/tecnicos', label: 'Lista de Técnicos', icon: Users },
-            { href: '/admin/horarios', label: 'Horarios / Turnos', icon: Calendar },
+            { href: '/horarios', label: 'Horarios / Turnos', icon: Calendar },
           ]
         },
         {

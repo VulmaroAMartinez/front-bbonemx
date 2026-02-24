@@ -7,14 +7,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import type { ShiftDefinition, AbsenceReason } from '@/lib/types/scheduling';
+import type { ShiftItem, AbsenceReasonItem } from './types';
 import { X, Trash2 } from 'lucide-react';
 import { stringToColor } from '@/lib/utils/scheduling';
 
 interface BulkActionToolbarProps {
     selectionCount: number;
-    shifts: ShiftDefinition[];
-    absenceReasons: AbsenceReason[];
+    shifts: ShiftItem[];
+    absenceReasons: AbsenceReasonItem[];
     onAssignShift: (shiftId: string) => void;
     onAssignAbsence: (absenceId: string) => void;
     onClear: () => void;
@@ -75,7 +75,7 @@ export function BulkActionToolbar({
                                 {absenceReasons.filter((a) => a.isActive).map((absence) => (
                                     <SelectItem key={absence.id} value={absence.id}>
                                         {absence.name}
-                                        {absence.maxPerWeek !== null && (
+                                        {absence.maxPerWeek != null && (
                                             <span className="text-xs text-muted-foreground ml-1">
                                                 (max {absence.maxPerWeek}/sem)
                                             </span>

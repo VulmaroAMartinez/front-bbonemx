@@ -36,6 +36,7 @@ import SolicitanteMisOrdenesPage from '@/pages/solicitante/MisOrdenesPage';
 import OrdenDetallePage from '@/pages/solicitante/OrdenDetallePage';
 import PerfilPage from '@/pages/shared/PerfilPage';
 import NewFindingPage from './pages/admin/NewFindingPage';
+import SchedulingPage from './pages/admin/schedule/SchedulingPage';
 
 const ShellLayout = ({ title }: { title: string }) => (
   <AppShell title={title}>
@@ -60,7 +61,7 @@ function App() {
               <Route path='/hallazgos' element={<FindingPage />} />
               <Route path='/hallazgos/nuevo' element={<NewFindingPage />} />
               <Route path="/admin/crear-ot" element={<AdminCrearOTPage />} />
-              {/* <Route path="/admin/horarios" element={<AdminHorariosPage />} /> */}
+              <Route path="/horarios" element={<SchedulingPage />} />
               {/* <Route path="/admin/tecnicos" element={<AdminTecnicosPage />} /> */}
             </Route>
           </Route>

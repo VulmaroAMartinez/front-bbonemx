@@ -1,15 +1,15 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { ShiftDefinition, AbsenceReason, ScheduleEntry } from '@/lib/types/scheduling';
+import type { ShiftItem, AbsenceReasonItem, ScheduleEntry } from './types';
 import { stringToColor } from '@/lib/utils/scheduling';
 import { Clock, Calendar, X } from 'lucide-react';
 
 interface CellSelectorProps {
     open: boolean;
     onClose: () => void;
-    shifts: ShiftDefinition[];
-    absenceReasons: AbsenceReason[];
+    shifts: ShiftItem[];
+    absenceReasons: AbsenceReasonItem[];
     currentSchedule?: ScheduleEntry;
     onSelect: (type: 'shift' | 'absence', id: string) => void;
 }
@@ -31,24 +31,18 @@ export function CellSelector({
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
-                    {/* Current Assignment */}
                     {currentSchedule && (
                         <div className="rounded-lg border border-border p-3 bg-muted/30">
                             <p className="text-xs font-medium text-muted-foreground mb-2">Asignacion actual:</p>
-                            {currentSchedule.shiftId && (
-                                <Badge variant="secondary">
-                                    {shifts.find((s) => s.id === currentSchedule.shiftId)?.name || 'Turno'}
-                                </Badge>
+                            {currentSchedule.shift && (
+                                <Badge variant="secondary">{currentSchedule.shift.name}</Badge>
                             )}
-                            {currentSchedule.absenceReasonId && (
-                                <Badge variant="outline">
-                                    {absenceReasons.find((a) => a.id === currentSchedule.absenceReasonId)?.name || 'Ausencia'}
-                                </Badge>
+                            {currentSchedule.absenceReason && (
+                                <Badge variant="outline">{currentSchedule.absenceReason.name}</Badge>
                             )}
                         </div>
                     )}
 
-                    {/* Shifts */}
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             <Clock className="h-4 w-4 text-primary" />
@@ -80,7 +74,6 @@ export function CellSelector({
                         </div>
                     </div>
 
-                    {/* Absences */}
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             <Calendar className="h-4 w-4 text-primary" />
@@ -99,7 +92,7 @@ export function CellSelector({
                                 >
                                     <div className="flex-1 text-left">
                                         <p className="text-sm font-medium">{absence.name}</p>
-                                        {absence.maxPerWeek !== null && (
+                                        {absence.maxPerWeek != null && (
                                             <p className="text-xs text-muted-foreground">
                                                 Limite: {absence.maxPerWeek} por semana
                                             </p>
@@ -110,7 +103,6 @@ export function CellSelector({
                         </div>
                     </div>
 
-                    {/* Clear */}
                     {currentSchedule && (
                         <Button variant="outline" onClick={onClose} className="w-full bg-transparent">
                             <X className="mr-2 h-4 w-4" />
