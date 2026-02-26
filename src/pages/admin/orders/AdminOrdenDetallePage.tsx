@@ -7,7 +7,7 @@ import {
   GetWorkOrderByIdDocument,
   GetTechniciansDocument,
   GetShiftsDocument,
-  GetMachinesDocument,
+  GetMachinesPageDataDocument,
   UpdateWorkOrderDocument,
   SignWorkOrderDocument,
   ResumeWorkOrderDocument,
@@ -102,7 +102,7 @@ function AdminOrdenDetallePage() {
   const { data, loading, error, refetch } = useQuery(GetWorkOrderByIdDocument, { variables: { id: id! }, skip: !id });
   const { data: techData } = useQuery(GetTechniciansDocument);
   const { data: shiftsData } = useQuery(GetShiftsDocument);
-  const [getMachines, { data: machinesData }] = useLazyQuery(GetMachinesDocument);
+  const [getMachines, { data: machinesData }] = useLazyQuery(GetMachinesPageDataDocument);
 
   const [updateOrder, { loading: updating }] = useMutation(UpdateWorkOrderDocument);
   const [assignOrder, { loading: assigning }] = useMutation(AssignWorkOrderDocument);
@@ -122,7 +122,7 @@ function AdminOrdenDetallePage() {
 
   const shifts = shiftsData?.shiftsActive || [];
   const technicians = unmaskFragment(TechnicianBasicFragmentDoc, techData?.techniciansActive || []);
-  const availableMachines = unmaskFragment(MachineBasicFragmentDoc, machinesData?.machinesActive?.filter(m => m.subAreaId === subArea?.id) || []);
+  const availableMachines = unmaskFragment(MachineBasicFragmentDoc, machinesData?.machines?.filter((m: any) => m.subAreaId === subArea?.id) || []);
 
   const handleBack = () => navigate(-1);
 

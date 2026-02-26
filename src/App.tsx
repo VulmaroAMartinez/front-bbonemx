@@ -15,17 +15,14 @@ import HomePage from '@/pages/HomePage';
 
 // Admin
 import AdminDashboardPage from '@/pages/admin/DashboardPage';
-import AdminOrdenesPage from '@/pages/admin/OrdenesPage';
-import AdminOrdenDetallePage from '@/pages/admin/AdminOrdenDetallePage';
-import AdminCrearOTPage from '@/pages/admin/CrearOTPage';
-import FindingPage from './pages/admin/FindingPage';
-import AdminHorariosPage from '@/pages/admin/HorariosPage';
-import AdminTecnicosPage from '@/pages/admin/TecnicosPage';
+import AdminOrdenesPage from '@/pages/admin/orders/OrdenesPage';
+import AdminOrdenDetallePage from '@/pages/admin/orders/AdminOrdenDetallePage';
+import AdminCrearOTPage from '@/pages/admin/orders/CrearOTPage';
+import FindingPage from './pages/admin/findings/FindingPage';
 
 // Tecnico
 import TecnicoAsignacionesPage from '@/pages/tecnico/AsignacionesPage';
 import TecnicoPendientesPage from '@/pages/tecnico/PendientesPage';
-import TecnicoHorarioPage from '@/pages/tecnico/HorarioPage';
 import TecnicoOrdenPage from '@/pages/tecnico/OrdenTecnicoPage';
 
 // Solicitante
@@ -35,8 +32,21 @@ import SolicitanteMisOrdenesPage from '@/pages/solicitante/MisOrdenesPage';
 // Shared
 import OrdenDetallePage from '@/pages/solicitante/OrdenDetallePage';
 import PerfilPage from '@/pages/shared/PerfilPage';
-import NewFindingPage from './pages/admin/NewFindingPage';
-import SchedulingPage from './pages/admin/schedule/SchedulingPage';
+import NewFindingPage from './pages/admin/findings/NewFindingPage';
+import SchedulePage from './pages/admin/schedule/SchedulePage';
+import TechSchedulePage from './pages/tecnico/TechSchedulePage';
+import RequestersPage from './pages/admin/catalogs/RequestersPage';
+import SparePartsPage from './pages/admin/catalogs/SparePartsPage';
+import MaterialsPage from './pages/admin/catalogs/MaterialsPage';
+import ShiftsPage from './pages/admin/catalogs/ShiftsPage';
+import PositionsPage from './pages/admin/catalogs/PositionsPage';
+import DepartmentsPage from './pages/admin/catalogs/DepartmentsPage';
+import TechniciansPage from './pages/admin/technicians/TechniciansPage';
+import TechnicianDetailPage from './pages/admin/technicians/TechnicianDetailPage';
+import MachinesPage from './pages/admin/machines/MachinesPage';
+import OrdersMachinePage from './pages/admin/machines/OrdersMachinePage';
+import RequestsMachinePage from './pages/admin/machines/RequestsMachinePage';
+import SparePartsMachinePage from './pages/admin/machines/SparePartsMachinePage';
 
 const ShellLayout = ({ title }: { title: string }) => (
   <AppShell title={title}>
@@ -60,16 +70,27 @@ function App() {
               <Route path="/admin/orden/:id" element={<AdminOrdenDetallePage />} />
               <Route path='/hallazgos' element={<FindingPage />} />
               <Route path='/hallazgos/nuevo' element={<NewFindingPage />} />
+              <Route path='/solicitantes' element={<RequestersPage />} />
+              <Route path='/repuestos' element={<SparePartsPage />} />
+              <Route path='/materiales' element={<MaterialsPage />} />
+              <Route path='/turnos' element={<ShiftsPage />} />
+              <Route path='/puestos' element={<PositionsPage />} />
+              <Route path='/departamentos' element={<DepartmentsPage />} />
               <Route path="/admin/crear-ot" element={<AdminCrearOTPage />} />
-              <Route path="/horarios" element={<SchedulingPage />} />
-              {/* <Route path="/admin/tecnicos" element={<AdminTecnicosPage />} /> */}
+              <Route path="/horarios" element={<SchedulePage />} />
+              <Route path="/tecnicos" element={<TechniciansPage />} />
+              <Route path="/tecnico/:id" element={<TechnicianDetailPage />} />
+              <Route path="/maquinas" element={<MachinesPage />} />
+              <Route path="/maquinas/:id/ordenes" element={<OrdersMachinePage />} />
+              <Route path="/maquinas/:id/solicitudes" element={<RequestsMachinePage />} />
+              <Route path="/maquinas/:id/refacciones" element={<SparePartsMachinePage />} />
             </Route>
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={[UserRole.TECHNICIAN]} />}>
             <Route element={<ShellLayout title="Portal Técnico" />}>
               <Route path="/tecnico/pendientes" element={<TecnicoPendientesPage />} />
-              {/* <Route path="/tecnico/horario" element={<TecnicoHorarioPage />} /> */}
+              <Route path="/horario" element={<TechSchedulePage />} />
               <Route path="/tecnico/asignaciones" element={<TecnicoAsignacionesPage />} />
               <Route path="/tecnico/orden/:id" element={<TecnicoOrdenPage />} />
             </Route>

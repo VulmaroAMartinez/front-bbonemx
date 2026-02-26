@@ -9,9 +9,9 @@ export { default as HomePage } from './HomePage';
 
 // Admin
 export { default as AdminDashboardPage } from './admin/DashboardPage';
-export { default as AdminOrdenesPage } from './admin/OrdenesPage';
-export { default as AdminOrdenDetallePage } from './admin/AdminOrdenDetallePage';
-export { default as AdminCrearOTPage } from './admin/CrearOTPage';
+export { default as AdminOrdenesPage } from './admin/orders/OrdenesPage';
+export { default as AdminOrdenDetallePage } from './admin/orders/AdminOrdenDetallePage';
+export { default as AdminCrearOTPage } from './admin/orders/CrearOTPage';
 export { default as AdminAsignarPage } from './admin/AsignarPage';
 export { default as AdminHorariosPage } from './admin/HorariosPage';
 export { default as AdminTecnicosPage } from './admin/TecnicosPage';

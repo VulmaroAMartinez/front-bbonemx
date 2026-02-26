@@ -5,10 +5,9 @@ import type {
     GetAbsenceReasonsActiveQuery,
 } from '@/lib/graphql/generated/graphql';
 
-// --- Codegen-derived type aliases ---
 
 export type ScheduleEntry = ScheduleItemFragment;
-export type ScheduleTechnician = GetScheduleTechniciansQuery['techniciansActive'][number];
+export type ScheduleTechnician = GetScheduleTechniciansQuery['techniciansWithDeleted'][number];
 export type ShiftItem = GetShiftsQuery['shiftsActive'][number];
 export type AbsenceReasonItem = GetAbsenceReasonsActiveQuery['absenceReasonsActive'][number];
 

@@ -17,6 +17,11 @@ import {
   LayoutList,
   Building,
   FileCog2,
+  Drill,
+  Briefcase,
+  Building2,
+  Bolt,
+  Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -53,14 +58,14 @@ export function MobileNav({ onClose }: MobileNavProps) {
       return [
         { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/admin/ordenes', label: 'Órdenes', icon: ClipboardList },
-        { href: '/admin/maquinas', label: 'Máquinas', icon: Forklift },
+        { href: '/maquinas', label: 'Máquinas', icon: Forklift },
         { href: '/hallazgos', label: 'Hallazgos', icon: Search },
         { href: '/admin/solicitud-material', label: 'Solicitud de material', icon: FileCog2 },
         {
-          label: 'Gestión de Personal',
+          label: 'Gestión de Técnicos',
           icon: Users,
           children: [
-            { href: '/admin/tecnicos', label: 'Lista de Técnicos', icon: Users },
+            { href: '/tecnicos', label: 'Técnicos', icon: Users },
             { href: '/horarios', label: 'Horarios / Turnos', icon: Calendar },
           ]
         },
@@ -68,7 +73,13 @@ export function MobileNav({ onClose }: MobileNavProps) {
           label: 'Catálogo',
           icon: LayoutList,
           children: [
-            { href: '/admin/areas', label: 'Áreas', icon: Building },
+            { href: '/areas', label: 'Áreas', icon: Building2 },
+            { href: '/departamentos', label: 'Departamentos', icon: Building },
+            { href: '/puestos', label: 'Puestos', icon: Briefcase },
+            { href: '/solicitantes', label: 'Solicitantes', icon: Users },
+            { href: '/repuestos', label: 'Repuestos', icon: Bolt },
+            { href: '/materiales', label: 'Materiales', icon: Drill },
+            { href: '/turnos', label: 'Turnos', icon: Clock }
           ]
         }
       ];
@@ -76,7 +87,7 @@ export function MobileNav({ onClose }: MobileNavProps) {
     if (isTechnician) {
       return [
         { href: '/tecnico/pendientes', label: 'Mis Pendientes', icon: ClipboardList },
-        { href: '/tecnico/horario', label: 'Mi Horario', icon: Calendar },
+        { href: '/horario', label: 'Mi Horario', icon: Calendar },
         { href: '/tecnico/asignaciones', label: 'Historial', icon: FileText },
       ];
     }
@@ -88,7 +99,7 @@ export function MobileNav({ onClose }: MobileNavProps) {
     }
     return [];
   };
-
+  
   const navItems = getNavItems();
 
   const handleNavigation = (href: string) => {

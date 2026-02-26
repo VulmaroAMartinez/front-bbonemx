@@ -635,6 +635,7 @@ type Mutation {
   activateSparePart(id: ID!): SparePart!
   activateSubArea(id: ID!): SubArea!
   activateTechnician(id: ID!): Technician!
+  activateUser(id: ID!): Boolean!
   addMaterialToRequest(input: AddMaterialToRequestInput!, materialRequestId: ID!): MaterialRequestMaterial!
   addWorkOrderMaterial(input: AddWorkOrderMaterialInput!): WorkOrderMaterial!
   addWorkOrderSparePart(input: AddWorkOrderSparePartInput!): WorkOrderSparePart!
@@ -922,14 +923,17 @@ type Query {
   absenceReason(id: ID!): AbsenceReason
   absenceReasons: [AbsenceReason!]!
   absenceReasonsActive: [AbsenceReason!]!
+  absenceReasonsWithDeleted: [AbsenceReason!]!
   area(id: ID!): Area
   areaByName(name: String!): Area
   areas: [Area!]!
   areasActive: [Area!]!
+  areasWithDeleted: [Area!]!
   dashboardData(input: DashboardInput!): DashboardData!
   department(id: ID!): Department
   departments: [Department!]!
   departmentsActive: [Department!]!
+  departmentsWithDeleted: [Department!]!
   finding(id: ID!): Finding
   findingByFolio(folio: String!): Finding
   findings: [Finding!]!
@@ -937,16 +941,20 @@ type Query {
   findingsFiltered(filters: FindingFiltersInput, pagination: FindingPaginationInput, sort: FindingSortInput): FindingPaginatedResponse!
   findingsOpen: [Finding!]!
   findingsStats: [FindingStats!]!
+  findingsWithDeleted: [Finding!]!
   machine(id: ID!): Machine
   machines: [Machine!]!
   machinesActive: [Machine!]!
+  machinesWithDeleted: [Machine!]!
   material(id: ID!): Material
   materialRequest(id: ID!): MaterialRequest
   materialRequestByFolio(folio: String!): MaterialRequest
   materialRequests: [MaterialRequest!]!
   materialRequestsActive: [MaterialRequest!]!
+  materialRequestsWithDeleted: [MaterialRequest!]!
   materials: [Material!]!
   materialsActive: [Material!]!
+  materialsWithDeleted: [Material!]!
 
   """Obtiene el usuario actualmente autenticado"""
   me: User!
@@ -964,6 +972,7 @@ type Query {
   position(id: ID!): Position
   positions: [Position!]!
   positionsActive: [Position!]!
+  positionsWithDeleted: [Position!]!
   preventiveTaskById(id: ID!): PreventiveTask
   preventiveTaskCountActive: Int!
   preventiveTaskStats: [PreventiveTaskStats!]!
@@ -972,21 +981,26 @@ type Query {
   preventiveTasksByMachineId(machineId: ID!): [PreventiveTask!]!
   preventiveTasksCronStatus: CronJobStatus!
   preventiveTasksFiltered(filters: PreventiveTaskFiltersInput, pagination: PreventiveTaskPaginationInput, sort: PreventiveTaskSortInput): PreventiveTaskPaginatedResponse!
+  preventiveTasksWithDeleted: [PreventiveTask!]!
   role(id: ID!): Role
   roles: [Role!]!
-  rolesActive: Role!
+  rolesActive: [Role!]!
+  rolesWithDeleted: [Role!]!
   schedulerStatus: SchedulerStatus!
   shift(id: ID!): Shift
   shifts: [Shift!]!
   shiftsActive: [Shift!]!
+  shiftsWithDeleted: [Shift!]!
   sparePart(id: ID!): SparePart
   spareParts: [SparePart!]!
   sparePartsActive: [SparePart!]!
   sparePartsByMachine(machineId: ID!): [SparePart!]!
+  sparePartsWithDeleted: [SparePart!]!
   subArea(id: ID!): SubArea
   subAreas: [SubArea!]!
   subAreasActive: [SubArea!]!
   subAreasByArea(areaId: ID!): [SubArea!]!
+  subAreasWithDeleted: [SubArea!]!
   technician(id: ID!): Technician
 
   """Obtiene un horario por ID"""
@@ -1000,15 +1014,20 @@ type Query {
   """
   technicianSchedulesFiltered(filters: ScheduleFiltersInput!): [TechnicianSchedule!]!
 
+  """Obtiene todos los horarios de técnicos incluyendo eliminados"""
+  technicianSchedulesWithDeleted: [TechnicianSchedule!]!
+
   """Obtiene los horarios de un técnico en una semana específica"""
   technicianWeekSchedule(technicianId: ID!, weekNumber: Int!, year: Int!): [TechnicianSchedule!]!
   technicians: [Technician!]!
   techniciansActive: [Technician!]!
+  techniciansWithDeleted: [Technician!]!
 
   """Contador de notificaciones no leídas"""
   unreadNotificationsCount: Int!
   user(id: ID!): User
   users: [User!]!
+  usersWithDeleted: [User!]!
 
   """Obtiene los horarios de una semana completa con resumen"""
   weekSchedule(weekNumber: Int!, year: Int!): WeekScheduleSummary!
@@ -1017,6 +1036,7 @@ type Query {
   workOrderStats: [WorkOrderStats!]!
   workOrders: [WorkOrder!]!
   workOrdersFiltered(filters: WorkOrderFiltersInput, pagination: PaginationInput, sort: WorkOrderSortInput): WorkOrderPaginatedResponse!
+  workOrdersWithDeleted: [WorkOrder!]!
 }
 
 input RegisterDeviceTokenInput {
@@ -1164,7 +1184,7 @@ type TechnicianSchedule {
   id: ID!
   isActive: Boolean!
   notes: String
-  scheduleDate: DateTime!
+  scheduleDate: String!
   shift: Shift
   shiftId: ID
   technician: User!

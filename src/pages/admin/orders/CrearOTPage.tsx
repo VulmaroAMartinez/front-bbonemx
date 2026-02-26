@@ -8,7 +8,7 @@ import {
   GetSubAreasByAreaDocument,
   GetTechniciansDocument,
   GetShiftsDocument,
-  GetMachinesDocument,
+  GetMachinesPageDataDocument,
   CreateWorkOrderDocument,
   AssignWorkOrderDocument,
   UploadWorkOrderPhotoDocument,
@@ -76,7 +76,7 @@ export default function AdminCrearOTPage() {
   const { data: shiftsData } = useQuery(GetShiftsDocument);
 
   const [getSubAreas, { data: subAreasData }] = useLazyQuery(GetSubAreasByAreaDocument);
-  const [getMachines, { data: machinesData }] = useLazyQuery(GetMachinesDocument);
+  const [getMachines, { data: machinesData }] = useLazyQuery(GetMachinesPageDataDocument);
 
   const [createWorkOrder] = useMutation(CreateWorkOrderDocument);
   const [assignWorkOrder] = useMutation(AssignWorkOrderDocument);
@@ -120,8 +120,8 @@ export default function AdminCrearOTPage() {
   const stoppageType = watch('stoppageType');
   const description = watch('description');
 
-  const allMachinesRaw = machinesData?.machinesActive || [];
-  const filteredMachinesRaw = allMachinesRaw.filter(m => m.subAreaId === subAreaId);
+  const allMachinesRaw = machinesData?.machines || [];
+  const filteredMachinesRaw = allMachinesRaw.filter((m: any) => m.subArea?.id === subAreaId);
   const availableMachines = unmaskFragment(MachineBasicFragmentDoc, filteredMachinesRaw);
 
   const selectedArea = areas.find((a) => a.id === areaId);

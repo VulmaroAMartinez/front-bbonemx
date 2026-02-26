@@ -46,10 +46,28 @@ export const SUB_AREA_BASIC_FRAGMENT = gql`
 export const MACHINE_BASIC_FRAGMENT = gql`
   fragment MachineBasic on Machine {
     id
-    name
     code
+    name
+    description
+    brand
+    model
     serialNumber
+    installationDate
+    machinePhotoUrl
+    operationalManualUrl
     isActive
+    subAreaId
+    subArea {
+      id
+      name
+      area {
+        id
+        name
+        type
+      }
+    }
+    createdAt
+    updatedAt
   }
 `;
 

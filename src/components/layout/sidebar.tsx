@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react'; // <-- Importante agregar useState
 import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
@@ -13,15 +11,22 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
-  ChevronLeft,  
+  ChevronLeft,
   type LucideIcon,
   Forklift,
   Search,
   LayoutList,
   Building,
   FileCog2,
+  Building2,
+  Briefcase,
+  Bolt,
+  Drill,
+  Clock,
+  User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { useLocation, useNavigate } from "react-router-dom";
 import logo_color from '@/assets/logo_color.svg';
 import logo from '@/assets/logo2.png';
@@ -56,14 +61,14 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
       return [
         { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/admin/ordenes', label: 'Órdenes', icon: ClipboardList },
-        { href: '/admin/maquinas', label: 'Máquinas', icon: Forklift },
+        { href: '/maquinas', label: 'Máquinas', icon: Forklift },
         { href: '/hallazgos', label: 'Hallazgos', icon: Search },
         { href: '/admin/solicitud-material', label: 'Solicitud de material', icon: FileCog2 },
         {
-          label: 'Gestión de Personal',
+          label: 'Gestión de Técnicos',
           icon: Users,
           children: [
-            { href: '/admin/tecnicos', label: 'Lista de Técnicos', icon: Users },
+            { href: '/tecnicos', label: 'Técnicos', icon: Users },
             { href: '/horarios', label: 'Horarios / Turnos', icon: Calendar },
           ]
         },
@@ -71,7 +76,13 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
           label: 'Catálogo',
           icon: LayoutList,
           children: [
-            { href: '/admin/areas', label: 'Áreas', icon: Building },
+            { href: '/areas', label: 'Áreas', icon: Building2 },
+            { href: '/departamentos', label: 'Departamentos', icon: Building },
+            { href: '/puestos', label: 'Puestos', icon: Briefcase },
+            { href: '/solicitantes', label: 'Solicitantes', icon: Users },
+            { href: '/repuestos', label: 'Repuestos', icon: Bolt },
+            { href: '/materiales', label: 'Materiales', icon: Drill },
+            { href: '/turnos', label: 'Turnos', icon: Clock }
           ]
         }
       ];
@@ -79,7 +90,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
     if (isTechnician) {
       return [
         { href: '/tecnico/pendientes', label: 'Mis Pendientes', icon: ClipboardList },
-        { href: '/tecnico/horario', label: 'Mi Horario', icon: Calendar },
+        { href: '/horario', label: 'Mi Horario', icon: Calendar },
         { href: '/tecnico/asignaciones', label: 'Historial', icon: FileText },
       ];
     }
@@ -189,7 +200,37 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
             );
           })}
         </ul>
+        <Separator className="my-4" />
+
+        {!isCollapsed && (
+          <div className="px-3 mb-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Cuenta
+            </p>
+          </div>
+        )}
+        <ul className="space-y-1">
+          <li>
+            <button
+              onClick={() => navigate('/perfil')}
+              className={cn(
+                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
+                location.pathname === '/perfil'
+                  ? 'bg-sidebar-accent text-sidebar-primary'
+                  : 'text-sidebar-foreground hover:bg-sidebar-accent/50',
+                isCollapsed ? 'justify-center' : 'justify-start'
+              )}
+              title={isCollapsed ? 'Perfil' : undefined}
+            >
+              <User className="h-5 w-5 text-muted-foreground" />
+              {!isCollapsed && (
+                <span className="text-sm font-medium">Perfil</span>
+              )}
+            </button>
+          </li>
+        </ul>
       </nav>
+
 
       {/* User info & logout */}
       <div className="border-t border-sidebar-border p-4">

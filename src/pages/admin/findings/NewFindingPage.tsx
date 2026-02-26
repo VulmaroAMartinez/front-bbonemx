@@ -6,7 +6,7 @@ import {
     GetAreasDocument,
     GetSubAreasByAreaDocument,
     GetShiftsDocument,
-    GetMachinesDocument,
+    GetMachinesPageDataDocument,
     CreateFindingDocument,
     type CreateFindingInput,
     AreaBasicFragmentDoc,
@@ -28,7 +28,7 @@ export default function NewFindingPage() {
     const { data: shiftsData, loading: shiftsLoading } = useQuery(GetShiftsDocument);
 
     const [getSubAreas, { data: subAreasData }] = useLazyQuery(GetSubAreasByAreaDocument);
-    const [getMachines, { data: machinesData }] = useLazyQuery(GetMachinesDocument);
+    const [getMachines, { data: machinesData }] = useLazyQuery(GetMachinesPageDataDocument);
 
     const [createFinding] = useMutation(CreateFindingDocument);
 
@@ -50,7 +50,7 @@ export default function NewFindingPage() {
     const [success, setSuccess] = useState<{ folio: string } | null>(null);
     const [formError, setFormError] = useState('');
 
-    const availableMachines = useFragment(MachineBasicFragmentDoc, machinesData?.machinesActive?.filter(m => m.subAreaId === form.subAreaId) || []);
+    const availableMachines = useFragment(MachineBasicFragmentDoc, machinesData?.machines?.filter((m: any) => m.subArea?.id === form.subAreaId) || []);
 
     const selectedArea = areas.find((a) => a.id === form.areaId);
     const isOperational = selectedArea?.type === 'OPERATIONAL';

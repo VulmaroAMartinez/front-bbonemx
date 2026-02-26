@@ -1,7 +1,12 @@
 import type { ScheduleEntry, AbsenceReasonItem, ValidationError, CellSelection } from '@/components/scheduling/types';
 
 export function normalizeDate(datetime: string): string {
-    return datetime.includes('T') ? datetime.split('T')[0] : datetime;
+    if (!datetime.includes('T')) return datetime;
+    const d = new Date(datetime);
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
 }
 
 export function getWeekNumber(date: Date): { week: number; year: number } {
@@ -75,7 +80,7 @@ export function validateAbsenceLimits(
                     date: normalizeDate(entry.scheduleDate),
                     absenceReasonId: reasonId,
                     message: `${reason.name} excede el limite de ${reason.maxPerWeek} por semana`,
-                    maxAllowed: reason.maxPerWeek,
+                    maxAllowed: reason.maxPerWeek ?? null,
                     currentCount: count,
                 });
             });

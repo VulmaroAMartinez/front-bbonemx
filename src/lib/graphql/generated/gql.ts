@@ -18,9 +18,32 @@ type Documents = {
     "\n  \n  query GetSubAreasByArea($areaId: ID!) {\n    subAreasByArea(areaId: $areaId) {\n      ...SubAreaBasic\n    }\n  }\n": typeof types.GetSubAreasByAreaDocument,
     "\n  \n  mutation Login($employeeNumber: String!, $password: String!) {\n    login(input: { employeeNumber: $employeeNumber, password: $password }) {\n      accessToken\n      user {\n        ...UserBasic\n      }\n    }\n  }\n": typeof types.LoginDocument,
     "\n  \n  query Me {\n    me {\n      ...UserBasic\n    }\n  }\n": typeof types.MeDocument,
-    "\n  \n  query GetTechnicians {\n    techniciansActive {\n      ...TechnicianBasic\n    }\n  }\n": typeof types.GetTechniciansDocument,
     "\n  query GetShifts {\n    shiftsActive {\n      id\n      name\n      startTime\n      endTime\n      isActive\n    }\n  }\n": typeof types.GetShiftsDocument,
-    "\n  \n  query GetMachines {\n    machinesActive {\n      ...MachineBasic\n      subAreaId\n    }\n  }\n": typeof types.GetMachinesDocument,
+    "\n  query GetMaterials {\n    materialsWithDeleted {\n      id\n      description\n      brand\n      manufacturer\n      model\n      partNumber\n      sku\n      unitOfMeasure\n      isActive\n      createdAt\n    }\n  }\n": typeof types.GetMaterialsDocument,
+    "\n  mutation CreateMaterial($input: CreateMaterialInput!) {\n    createMaterial(input: $input) {\n      id\n      description\n      isActive\n    }\n  }\n": typeof types.CreateMaterialDocument,
+    "\n  mutation UpdateMaterial($id: ID!, $input: UpdateMaterialInput!) {\n    updateMaterial(id: $id, input: $input) {\n      id\n      description\n    }\n  }\n": typeof types.UpdateMaterialDocument,
+    "\n  mutation ActivateMaterial($id: ID!) {\n    activateMaterial(id: $id) {\n      id\n      isActive\n    }\n  }\n": typeof types.ActivateMaterialDocument,
+    "\n  mutation DeactivateMaterial($id: ID!) {\n    deactivateMaterial(id: $id)\n  }\n": typeof types.DeactivateMaterialDocument,
+    "\n  \n  query GetSpareParts {\n    sparePartsWithDeleted {\n      id\n      partNumber\n      brand\n      model\n      supplier\n      unitOfMeasure\n      isActive\n      createdAt\n      machine {\n        ...MachineBasic\n      }\n    }\n  }\n": typeof types.GetSparePartsDocument,
+    "\n  mutation CreateSparePart($input: CreateSparePartInput!) {\n    createSparePart(input: $input) {\n      id\n      partNumber\n      isActive\n    }\n  }\n": typeof types.CreateSparePartDocument,
+    "\n  mutation UpdateSparePart($id: ID!, $input: UpdateSparePartInput!) {\n    updateSparePart(id: $id, input: $input) {\n      id\n      partNumber\n    }\n  }\n": typeof types.UpdateSparePartDocument,
+    "\n  mutation ActivateSparePart($id: ID!) {\n    activateSparePart(id: $id) {\n      id\n      isActive\n    }\n  }\n": typeof types.ActivateSparePartDocument,
+    "\n  mutation DeactivateSparePart($id: ID!) {\n    deactivateSparePart(id: $id)\n  }\n": typeof types.DeactivateSparePartDocument,
+    "\n  query GetPositions {\n    positionsWithDeleted {\n      id\n      name\n      description\n      isActive\n      createdAt\n    }\n  }\n": typeof types.GetPositionsDocument,
+    "\n  mutation CreatePosition($input: CreatePositionInput!) {\n    createPosition(input: $input) {\n      id\n      name\n      isActive\n    }\n  }\n": typeof types.CreatePositionDocument,
+    "\n  mutation UpdatePosition($id: ID!, $input: UpdatePositionInput!) {\n    updatePosition(id: $id, input: $input) {\n      id\n      name\n      description\n    }\n  }\n": typeof types.UpdatePositionDocument,
+    "\n  mutation ActivatePosition($id: ID!) {\n    activatePosition(id: $id) {\n      id\n      isActive\n    }\n  }\n": typeof types.ActivatePositionDocument,
+    "\n  mutation DeactivatePosition($id: ID!) {\n    deactivatePosition(id: $id)\n  }\n": typeof types.DeactivatePositionDocument,
+    "\n  query GetShiftsAll {\n    shiftsWithDeleted {\n      id\n      name\n      startTime\n      endTime\n      isActive\n      createdAt\n    }\n  }\n": typeof types.GetShiftsAllDocument,
+    "\n  mutation CreateShift($input: CreateShiftInput!) {\n    createShift(input: $input) {\n      id\n      name\n      isActive\n    }\n  }\n": typeof types.CreateShiftDocument,
+    "\n  mutation UpdateShift($id: ID!, $input: UpdateShiftInput!) {\n    updateShift(id: $id, input: $input) {\n      id\n      name\n      startTime\n      endTime\n    }\n  }\n": typeof types.UpdateShiftDocument,
+    "\n  mutation ActivateShift($id: ID!) {\n    activateShift(id: $id) {\n      id\n      isActive\n    }\n  }\n": typeof types.ActivateShiftDocument,
+    "\n  mutation DeactivateShift($id: ID!) {\n    deactivateShift(id: $id)\n  }\n": typeof types.DeactivateShiftDocument,
+    "\n  query GetDepartments {\n    departmentsWithDeleted {\n      id\n      name\n      description\n      isActive\n      createdAt\n    }\n  }\n": typeof types.GetDepartmentsDocument,
+    "\n  mutation CreateDepartment($input: CreateDepartmentInput!) {\n    createDepartment(input: $input) {\n      id\n      name\n      isActive\n    }\n  }\n": typeof types.CreateDepartmentDocument,
+    "\n  mutation UpdateDepartment($id: ID!, $input: UpdateDepartmentInput!) {\n    updateDepartment(id: $id, input: $input) {\n      id\n      name\n      description\n    }\n  }\n": typeof types.UpdateDepartmentDocument,
+    "\n  mutation ActivateDepartment($id: ID!) {\n    activateDepartment(id: $id) {\n      id\n      isActive\n    }\n  }\n": typeof types.ActivateDepartmentDocument,
+    "\n  mutation DeactivateDepartment($id: ID!) {\n    deactivateDepartment(id: $id)\n  }\n": typeof types.DeactivateDepartmentDocument,
     "\nquery GetDashboardData($input: DashboardInput!) {\n    dashboardData(input: $input) {\n      generatedAt\n      kpis {\n        activeBacklog\n        leadTimeHoursAvg\n        mttrHoursAvg\n        preventiveComplianceRate\n      }\n      charts {\n        downtimeByAreaTop5 {\n          areaId\n          areaName\n          value\n        }\n        findingsConversion {\n          key\n          value\n        }\n        maintenanceMixByPeriod {\n          period\n          type\n          count\n        }\n        throughputByWeek {\n          period\n          count\n        }\n      }\n      rankings {\n        topMachinesByDowntime {\n          machineId\n          machineName\n          value\n        }\n        topTechniciansByClosures {\n          technicianId\n          technicianName\n          value\n        }\n      }\n    }\n  }\n": typeof types.GetDashboardDataDocument,
     "\n  \n  \n  fragment FindingBasic on Finding {\n    id\n    folio\n    description\n    photoPath\n    status\n    createdAt\n    area {\n      ...AreaBasic\n    }\n    machine {\n      ...MachineBasic\n    }\n    shift {\n      id\n      name\n    }\n    convertedToWo {\n      id\n      folio\n    }\n  }\n": typeof types.FindingBasicFragmentDoc,
     "\n  \n  query GetFindingsFiltered($filters: FindingFiltersInput, $pagination: FindingPaginationInput) {\n    findingsFiltered(filters: $filters, pagination: $pagination) {\n      data {\n        ...FindingBasic\n      }\n      total\n    }\n  }\n": typeof types.GetFindingsFilteredDocument,
@@ -30,22 +53,44 @@ type Documents = {
     "\n  \n  fragment UserBasic on User {\n    id\n    employeeNumber\n    firstName\n    lastName\n    fullName\n    email\n    isActive\n    role {\n      ...RoleBasic\n    }\n  }\n": typeof types.UserBasicFragmentDoc,
     "\n  fragment AreaBasic on Area {\n    id\n    name\n    type\n    description\n    isActive\n  }\n": typeof types.AreaBasicFragmentDoc,
     "\n  fragment SubAreaBasic on SubArea {\n    id\n    name\n    description\n    isActive\n    areaId\n  }\n": typeof types.SubAreaBasicFragmentDoc,
-    "\n  fragment MachineBasic on Machine {\n    id\n    name\n    code\n    serialNumber\n    isActive\n  }\n": typeof types.MachineBasicFragmentDoc,
+    "\n  fragment MachineBasic on Machine {\n    id\n    code\n    name\n    description\n    brand\n    model\n    serialNumber\n    installationDate\n    machinePhotoUrl\n    operationalManualUrl\n    isActive\n    subAreaId\n    subArea {\n      id\n      name\n      area {\n        id\n        name\n        type\n      }\n    }\n    createdAt\n    updatedAt\n  }\n": typeof types.MachineBasicFragmentDoc,
     "\n  fragment PositionBasic on Position {\n    id\n    name\n    description\n    isActive\n  }\n": typeof types.PositionBasicFragmentDoc,
     "\n  \n  \n  fragment TechnicianBasic on Technician {\n    id\n    isActive\n    user {\n      ...UserBasic\n    }\n    position {\n      ...PositionBasic\n    }\n  }\n": typeof types.TechnicianBasicFragmentDoc,
+    "\n  \n  query GetMachinesPageData {\n    machines {\n      ...MachineBasic\n    }\n    areasActive {\n      id\n      name\n      type\n    }\n    subAreasActive {\n      id\n      name\n    }\n  }\n": typeof types.GetMachinesPageDataDocument,
+    "\n  \n  query GetMachine($id: ID!) {\n    machine(id: $id) {\n      ...MachineBasic\n    }\n  }\n": typeof types.GetMachineDocument,
+    "\n  query GetMachineSpareParts($id: ID!) {\n    machine(id: $id) {\n      id\n      name\n      code\n      spareParts {\n        id\n        partNumber\n        brand\n        model\n        supplier\n        unitOfMeasure\n        isActive\n        createdAt\n      }\n    }\n  }\n": typeof types.GetMachineSparePartsDocument,
+    "\n  query GetMachineWorkOrders($id: ID!) {\n    machine(id: $id) {\n      id\n      name\n      code\n      workOrders {\n        id\n        folio\n        description\n        status\n        priority\n        maintenanceType\n        startDate\n        endDate\n        createdAt\n        requester {\n          id\n          fullName\n        }\n        area {\n          id\n          name\n        }\n      }\n    }\n  }\n": typeof types.GetMachineWorkOrdersDocument,
+    "\n  query GetMachineMaterialRequests($id: ID!) {\n    machine(id: $id) {\n      id\n      name\n      code\n      materialRequests {\n        id\n        folio\n        requestText\n        priority\n        justification\n        isGenericOrAlternativeModel\n        suggestedSupplier\n        createdAt\n        materials {\n          id\n          quantity\n          importance\n          material {\n            id\n            description\n            partNumber\n            brand\n          }\n        }\n      }\n    }\n  }\n": typeof types.GetMachineMaterialRequestsDocument,
+    "\n  \n  mutation CreateMachine($input: CreateMachineInput!) {\n    createMachine(input: $input) {\n      ...MachineBasic\n    }\n  }\n": typeof types.CreateMachineDocument,
+    "\n  \n  mutation UpdateMachine($id: ID!, $input: UpdateMachineInput!) {\n    updateMachine(id: $id, input: $input) {\n      ...MachineBasic\n    }\n  }\n": typeof types.UpdateMachineDocument,
+    "\n  mutation DeactivateMachine($id: ID!) {\n    deactivateMachine(id: $id)\n  }\n": typeof types.DeactivateMachineDocument,
+    "\n  \n  mutation ActivateMachine($id: ID!) {\n    activateMachine(id: $id) {\n      ...MachineBasic\n    }\n  }\n": typeof types.ActivateMachineDocument,
     "\n  fragment NotificationItem on Notification {\n    id\n    title\n    body\n    type\n    readAt\n    createdAt\n    data\n  }\n": typeof types.NotificationItemFragmentDoc,
     "\n  \n  query MyNotifications($limit: Int, $page: Int, $unreadOnly: Boolean) {\n    myNotifications(\n      pagination: { limit: $limit, page: $page }\n      filters: { unreadOnly: $unreadOnly }\n    ) {\n      data {\n        ...NotificationItem\n      }\n      unreadCount\n      total\n      totalPages\n    }\n  }\n": typeof types.MyNotificationsDocument,
     "\n  mutation MarkNotificationAsRead($id: ID!) {\n    markNotificationAsRead(id: $id) {\n      id\n      readAt\n    }\n  }\n": typeof types.MarkNotificationAsReadDocument,
     "\n  mutation MarkAllNotificationsAsRead {\n    markAllNotificationsAsRead\n  }\n": typeof types.MarkAllNotificationsAsReadDocument,
     "\n  fragment ScheduleItem on TechnicianSchedule {\n    id\n    technicianId\n    shiftId\n    absenceReasonId\n    scheduleDate\n    weekNumber\n    year\n    notes\n    isActive\n    shift {\n      id\n      name\n      startTime\n      endTime\n    }\n    absenceReason {\n      id\n      name\n      isActive\n      maxPerWeek\n    }\n    technician {\n      id\n      fullName\n    }\n  }\n": typeof types.ScheduleItemFragmentDoc,
     "\n  \n  query GetWeekSchedule($weekNumber: Int!, $year: Int!) {\n    weekSchedule(weekNumber: $weekNumber, year: $year) {\n      weekNumber\n      year\n      totalAssignments\n      totalAbsences\n      totalWorkDays\n      schedules {\n        ...ScheduleItem\n      }\n    }\n  }\n": typeof types.GetWeekScheduleDocument,
-    "\n  query GetScheduleTechnicians {\n    techniciansActive {\n      id\n      user {\n        id\n        fullName\n        employeeNumber\n      }\n      position {\n        name\n      }\n    }\n  }\n": typeof types.GetScheduleTechniciansDocument,
+    "\n  query GetScheduleTechnicians {\n    techniciansWithDeleted {\n      id\n      user {\n        id\n        fullName\n        employeeNumber\n      }\n      position {\n        name\n      }\n    }\n  }\n": typeof types.GetScheduleTechniciansDocument,
     "\n  query GetAbsenceReasonsActive {\n    absenceReasonsActive {\n      id\n      name\n      isActive\n      maxPerWeek\n    }\n  }\n": typeof types.GetAbsenceReasonsActiveDocument,
     "\n  \n  mutation AssignWeekSchedule($input: AssignWeekScheduleInput!) {\n    assignWeekSchedule(input: $input) {\n      ...ScheduleItem\n    }\n  }\n": typeof types.AssignWeekScheduleDocument,
     "\n  \n  mutation CreateTechnicianSchedule($input: CreateScheduleInput!) {\n    createTechnicianSchedule(input: $input) {\n      ...ScheduleItem\n    }\n  }\n": typeof types.CreateTechnicianScheduleDocument,
     "\n  \n  mutation UpdateTechnicianSchedule($id: ID!, $input: UpdateScheduleInput!) {\n    updateTechnicianSchedule(id: $id, input: $input) {\n      ...ScheduleItem\n    }\n  }\n": typeof types.UpdateTechnicianScheduleDocument,
     "\n  mutation DeleteTechnicianSchedule($id: ID!) {\n    deleteTechnicianSchedule(id: $id)\n  }\n": typeof types.DeleteTechnicianScheduleDocument,
     "\n  \n  mutation CopyWeekSchedules($input: CopyWeekSchedulesInput!) {\n    copyWeekSchedules(input: $input) {\n      ...ScheduleItem\n    }\n  }\n": typeof types.CopyWeekSchedulesDocument,
+    "\n  \n  query GetTechnicianWeekSchedule($technicianId: ID!, $weekNumber: Int!, $year: Int!) {\n    technicianWeekSchedule(technicianId: $technicianId, weekNumber: $weekNumber, year: $year) {\n      ...ScheduleItem\n    }\n  }\n": typeof types.GetTechnicianWeekScheduleDocument,
+    "\n  \n  query GetTechnicians {\n    techniciansActive {\n      ...TechnicianBasic\n    }\n  }\n": typeof types.GetTechniciansDocument,
+    "\n  query GetTechniciansData {\n    techniciansWithDeleted {\n      id\n      isActive\n      address\n      allergies\n      birthDate\n      bloodType\n      childrenCount\n      education\n      emergencyContactName\n      emergencyContactPhone\n      emergencyContactRelationship\n      hireDate\n      nss\n      pantsSize\n      rfc\n      shirtSize\n      shoeSize\n      transportRoute\n      vacationPeriod\n      user {\n        id\n        firstName\n        lastName\n        fullName\n        employeeNumber\n        email\n        phone\n        departmentId\n      }\n      position {\n        id\n        name\n      }\n    }\n    departmentsWithDeleted {\n      id\n      name\n    }\n    positionsWithDeleted {\n      id\n      name\n    }\n    rolesWithDeleted {\n      id\n      name\n    }\n  }\n": typeof types.GetTechniciansDataDocument,
+    "\nquery GetTechnicianDetail($id: ID!) {\ntechnician(id: $id) {\n    id\n    isActive\n      address\n      allergies\n      birthDate\n      bloodType\n      childrenCount\n      education\n      emergencyContactName\n      emergencyContactPhone\n      emergencyContactRelationship\n      hireDate\n      nss\n      pantsSize\n      rfc\n      shirtSize\n      shoeSize\n      transportRoute\n      vacationPeriod\n      user {\n        id\n        fullName\n        employeeNumber\n        email\n        phone\n        department {\n          id\n          name\n        }\n      }\n      position {\n        id\n        name\n      }\n    }\n  }\n": typeof types.GetTechnicianDetailDocument,
+    "\n  mutation CreateTechnicianProfile($input: CreateTechnicianInput!) {\n    createTechnician(input: $input) {\n      id\n    }\n  }\n": typeof types.CreateTechnicianProfileDocument,
+    "\n  mutation UpdateTechnicianProfile($id: ID!, $input: UpdateTechnicianInput!) {\n    updateTechnician(id: $id, input: $input) {\n      id\n    }\n  }\n": typeof types.UpdateTechnicianProfileDocument,
+    "\n  mutation ActivateTechnician($id: ID!) {\n    activateTechnician(id: $id) {\n      id\n      isActive\n    }\n  }\n": typeof types.ActivateTechnicianDocument,
+    "\n  mutation DeactivateTechnician($id: ID!) {\n    deactivateTechnician(id: $id)\n  }\n": typeof types.DeactivateTechnicianDocument,
+    "\n  query GetRequestersData {\n    usersWithDeleted {\n      id\n      employeeNumber\n      firstName\n      lastName\n      fullName\n      email\n      phone\n      isActive\n      department {\n        id\n        name\n      }\n      role {\n        id\n        name\n      }\n    }\n    departmentsWithDeleted {\n      id\n      name\n    }\n    rolesWithDeleted {\n      id\n      name\n    }\n  }\n": typeof types.GetRequestersDataDocument,
+    "\n  mutation CreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      id\n      fullName\n    }\n  }\n": typeof types.CreateUserDocument,
+    "\n  mutation UpdateUser($id: ID!, $input: UpdateUserInput!) {\n    updateUser(id: $id, input: $input) {\n      id\n      fullName\n    }\n  }\n": typeof types.UpdateUserDocument,
+    "\n  mutation DeactivateUser($id: ID!) {\n    deactivateUser(id: $id)\n  }\n": typeof types.DeactivateUserDocument,
+    "\n  mutation ActivateUser($id: ID!) {\n    activateUser(id: $id)\n  }\n": typeof types.ActivateUserDocument,
     "\n  \n  \n  \n  \n  fragment WorkOrderItem on WorkOrder {\n    id\n    folio\n    description\n    status\n    priority\n    maintenanceType\n    stopType\n    assignedShiftId\n    machineId\n    createdAt\n    isFullySigned\n    area {\n      ...AreaBasic\n    }\n    subArea {\n      ...SubAreaBasic\n    }\n    machine {\n      ...MachineBasic\n    }\n    requester {\n      ...UserBasic\n    }\n    technicians {\n      isLead\n      technician {\n        ...UserBasic\n      }\n    }\n  }\n": typeof types.WorkOrderItemFragmentDoc,
     "\n  \n  query MyRequestedWorkOrders {\n    myRequestedWorkOrders {\n      ...WorkOrderItem\n    }\n  }\n": typeof types.MyRequestedWorkOrdersDocument,
     "\n  \n  query MyAssignedWorkOrders {\n    myAssignedWorkOrders {\n      ...WorkOrderItem\n    }\n  }\n": typeof types.MyAssignedWorkOrdersDocument,
@@ -67,9 +112,32 @@ const documents: Documents = {
     "\n  \n  query GetSubAreasByArea($areaId: ID!) {\n    subAreasByArea(areaId: $areaId) {\n      ...SubAreaBasic\n    }\n  }\n": types.GetSubAreasByAreaDocument,
     "\n  \n  mutation Login($employeeNumber: String!, $password: String!) {\n    login(input: { employeeNumber: $employeeNumber, password: $password }) {\n      accessToken\n      user {\n        ...UserBasic\n      }\n    }\n  }\n": types.LoginDocument,
     "\n  \n  query Me {\n    me {\n      ...UserBasic\n    }\n  }\n": types.MeDocument,
-    "\n  \n  query GetTechnicians {\n    techniciansActive {\n      ...TechnicianBasic\n    }\n  }\n": types.GetTechniciansDocument,
     "\n  query GetShifts {\n    shiftsActive {\n      id\n      name\n      startTime\n      endTime\n      isActive\n    }\n  }\n": types.GetShiftsDocument,
-    "\n  \n  query GetMachines {\n    machinesActive {\n      ...MachineBasic\n      subAreaId\n    }\n  }\n": types.GetMachinesDocument,
+    "\n  query GetMaterials {\n    materialsWithDeleted {\n      id\n      description\n      brand\n      manufacturer\n      model\n      partNumber\n      sku\n      unitOfMeasure\n      isActive\n      createdAt\n    }\n  }\n": types.GetMaterialsDocument,
+    "\n  mutation CreateMaterial($input: CreateMaterialInput!) {\n    createMaterial(input: $input) {\n      id\n      description\n      isActive\n    }\n  }\n": types.CreateMaterialDocument,
+    "\n  mutation UpdateMaterial($id: ID!, $input: UpdateMaterialInput!) {\n    updateMaterial(id: $id, input: $input) {\n      id\n      description\n    }\n  }\n": types.UpdateMaterialDocument,
+    "\n  mutation ActivateMaterial($id: ID!) {\n    activateMaterial(id: $id) {\n      id\n      isActive\n    }\n  }\n": types.ActivateMaterialDocument,
+    "\n  mutation DeactivateMaterial($id: ID!) {\n    deactivateMaterial(id: $id)\n  }\n": types.DeactivateMaterialDocument,
+    "\n  \n  query GetSpareParts {\n    sparePartsWithDeleted {\n      id\n      partNumber\n      brand\n      model\n      supplier\n      unitOfMeasure\n      isActive\n      createdAt\n      machine {\n        ...MachineBasic\n      }\n    }\n  }\n": types.GetSparePartsDocument,
+    "\n  mutation CreateSparePart($input: CreateSparePartInput!) {\n    createSparePart(input: $input) {\n      id\n      partNumber\n      isActive\n    }\n  }\n": types.CreateSparePartDocument,
+    "\n  mutation UpdateSparePart($id: ID!, $input: UpdateSparePartInput!) {\n    updateSparePart(id: $id, input: $input) {\n      id\n      partNumber\n    }\n  }\n": types.UpdateSparePartDocument,
+    "\n  mutation ActivateSparePart($id: ID!) {\n    activateSparePart(id: $id) {\n      id\n      isActive\n    }\n  }\n": types.ActivateSparePartDocument,
+    "\n  mutation DeactivateSparePart($id: ID!) {\n    deactivateSparePart(id: $id)\n  }\n": types.DeactivateSparePartDocument,
+    "\n  query GetPositions {\n    positionsWithDeleted {\n      id\n      name\n      description\n      isActive\n      createdAt\n    }\n  }\n": types.GetPositionsDocument,
+    "\n  mutation CreatePosition($input: CreatePositionInput!) {\n    createPosition(input: $input) {\n      id\n      name\n      isActive\n    }\n  }\n": types.CreatePositionDocument,
+    "\n  mutation UpdatePosition($id: ID!, $input: UpdatePositionInput!) {\n    updatePosition(id: $id, input: $input) {\n      id\n      name\n      description\n    }\n  }\n": types.UpdatePositionDocument,
+    "\n  mutation ActivatePosition($id: ID!) {\n    activatePosition(id: $id) {\n      id\n      isActive\n    }\n  }\n": types.ActivatePositionDocument,
+    "\n  mutation DeactivatePosition($id: ID!) {\n    deactivatePosition(id: $id)\n  }\n": types.DeactivatePositionDocument,
+    "\n  query GetShiftsAll {\n    shiftsWithDeleted {\n      id\n      name\n      startTime\n      endTime\n      isActive\n      createdAt\n    }\n  }\n": types.GetShiftsAllDocument,
+    "\n  mutation CreateShift($input: CreateShiftInput!) {\n    createShift(input: $input) {\n      id\n      name\n      isActive\n    }\n  }\n": types.CreateShiftDocument,
+    "\n  mutation UpdateShift($id: ID!, $input: UpdateShiftInput!) {\n    updateShift(id: $id, input: $input) {\n      id\n      name\n      startTime\n      endTime\n    }\n  }\n": types.UpdateShiftDocument,
+    "\n  mutation ActivateShift($id: ID!) {\n    activateShift(id: $id) {\n      id\n      isActive\n    }\n  }\n": types.ActivateShiftDocument,
+    "\n  mutation DeactivateShift($id: ID!) {\n    deactivateShift(id: $id)\n  }\n": types.DeactivateShiftDocument,
+    "\n  query GetDepartments {\n    departmentsWithDeleted {\n      id\n      name\n      description\n      isActive\n      createdAt\n    }\n  }\n": types.GetDepartmentsDocument,
+    "\n  mutation CreateDepartment($input: CreateDepartmentInput!) {\n    createDepartment(input: $input) {\n      id\n      name\n      isActive\n    }\n  }\n": types.CreateDepartmentDocument,
+    "\n  mutation UpdateDepartment($id: ID!, $input: UpdateDepartmentInput!) {\n    updateDepartment(id: $id, input: $input) {\n      id\n      name\n      description\n    }\n  }\n": types.UpdateDepartmentDocument,
+    "\n  mutation ActivateDepartment($id: ID!) {\n    activateDepartment(id: $id) {\n      id\n      isActive\n    }\n  }\n": types.ActivateDepartmentDocument,
+    "\n  mutation DeactivateDepartment($id: ID!) {\n    deactivateDepartment(id: $id)\n  }\n": types.DeactivateDepartmentDocument,
     "\nquery GetDashboardData($input: DashboardInput!) {\n    dashboardData(input: $input) {\n      generatedAt\n      kpis {\n        activeBacklog\n        leadTimeHoursAvg\n        mttrHoursAvg\n        preventiveComplianceRate\n      }\n      charts {\n        downtimeByAreaTop5 {\n          areaId\n          areaName\n          value\n        }\n        findingsConversion {\n          key\n          value\n        }\n        maintenanceMixByPeriod {\n          period\n          type\n          count\n        }\n        throughputByWeek {\n          period\n          count\n        }\n      }\n      rankings {\n        topMachinesByDowntime {\n          machineId\n          machineName\n          value\n        }\n        topTechniciansByClosures {\n          technicianId\n          technicianName\n          value\n        }\n      }\n    }\n  }\n": types.GetDashboardDataDocument,
     "\n  \n  \n  fragment FindingBasic on Finding {\n    id\n    folio\n    description\n    photoPath\n    status\n    createdAt\n    area {\n      ...AreaBasic\n    }\n    machine {\n      ...MachineBasic\n    }\n    shift {\n      id\n      name\n    }\n    convertedToWo {\n      id\n      folio\n    }\n  }\n": types.FindingBasicFragmentDoc,
     "\n  \n  query GetFindingsFiltered($filters: FindingFiltersInput, $pagination: FindingPaginationInput) {\n    findingsFiltered(filters: $filters, pagination: $pagination) {\n      data {\n        ...FindingBasic\n      }\n      total\n    }\n  }\n": types.GetFindingsFilteredDocument,
@@ -79,22 +147,44 @@ const documents: Documents = {
     "\n  \n  fragment UserBasic on User {\n    id\n    employeeNumber\n    firstName\n    lastName\n    fullName\n    email\n    isActive\n    role {\n      ...RoleBasic\n    }\n  }\n": types.UserBasicFragmentDoc,
     "\n  fragment AreaBasic on Area {\n    id\n    name\n    type\n    description\n    isActive\n  }\n": types.AreaBasicFragmentDoc,
     "\n  fragment SubAreaBasic on SubArea {\n    id\n    name\n    description\n    isActive\n    areaId\n  }\n": types.SubAreaBasicFragmentDoc,
-    "\n  fragment MachineBasic on Machine {\n    id\n    name\n    code\n    serialNumber\n    isActive\n  }\n": types.MachineBasicFragmentDoc,
+    "\n  fragment MachineBasic on Machine {\n    id\n    code\n    name\n    description\n    brand\n    model\n    serialNumber\n    installationDate\n    machinePhotoUrl\n    operationalManualUrl\n    isActive\n    subAreaId\n    subArea {\n      id\n      name\n      area {\n        id\n        name\n        type\n      }\n    }\n    createdAt\n    updatedAt\n  }\n": types.MachineBasicFragmentDoc,
     "\n  fragment PositionBasic on Position {\n    id\n    name\n    description\n    isActive\n  }\n": types.PositionBasicFragmentDoc,
     "\n  \n  \n  fragment TechnicianBasic on Technician {\n    id\n    isActive\n    user {\n      ...UserBasic\n    }\n    position {\n      ...PositionBasic\n    }\n  }\n": types.TechnicianBasicFragmentDoc,
+    "\n  \n  query GetMachinesPageData {\n    machines {\n      ...MachineBasic\n    }\n    areasActive {\n      id\n      name\n      type\n    }\n    subAreasActive {\n      id\n      name\n    }\n  }\n": types.GetMachinesPageDataDocument,
+    "\n  \n  query GetMachine($id: ID!) {\n    machine(id: $id) {\n      ...MachineBasic\n    }\n  }\n": types.GetMachineDocument,
+    "\n  query GetMachineSpareParts($id: ID!) {\n    machine(id: $id) {\n      id\n      name\n      code\n      spareParts {\n        id\n        partNumber\n        brand\n        model\n        supplier\n        unitOfMeasure\n        isActive\n        createdAt\n      }\n    }\n  }\n": types.GetMachineSparePartsDocument,
+    "\n  query GetMachineWorkOrders($id: ID!) {\n    machine(id: $id) {\n      id\n      name\n      code\n      workOrders {\n        id\n        folio\n        description\n        status\n        priority\n        maintenanceType\n        startDate\n        endDate\n        createdAt\n        requester {\n          id\n          fullName\n        }\n        area {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.GetMachineWorkOrdersDocument,
+    "\n  query GetMachineMaterialRequests($id: ID!) {\n    machine(id: $id) {\n      id\n      name\n      code\n      materialRequests {\n        id\n        folio\n        requestText\n        priority\n        justification\n        isGenericOrAlternativeModel\n        suggestedSupplier\n        createdAt\n        materials {\n          id\n          quantity\n          importance\n          material {\n            id\n            description\n            partNumber\n            brand\n          }\n        }\n      }\n    }\n  }\n": types.GetMachineMaterialRequestsDocument,
+    "\n  \n  mutation CreateMachine($input: CreateMachineInput!) {\n    createMachine(input: $input) {\n      ...MachineBasic\n    }\n  }\n": types.CreateMachineDocument,
+    "\n  \n  mutation UpdateMachine($id: ID!, $input: UpdateMachineInput!) {\n    updateMachine(id: $id, input: $input) {\n      ...MachineBasic\n    }\n  }\n": types.UpdateMachineDocument,
+    "\n  mutation DeactivateMachine($id: ID!) {\n    deactivateMachine(id: $id)\n  }\n": types.DeactivateMachineDocument,
+    "\n  \n  mutation ActivateMachine($id: ID!) {\n    activateMachine(id: $id) {\n      ...MachineBasic\n    }\n  }\n": types.ActivateMachineDocument,
     "\n  fragment NotificationItem on Notification {\n    id\n    title\n    body\n    type\n    readAt\n    createdAt\n    data\n  }\n": types.NotificationItemFragmentDoc,
     "\n  \n  query MyNotifications($limit: Int, $page: Int, $unreadOnly: Boolean) {\n    myNotifications(\n      pagination: { limit: $limit, page: $page }\n      filters: { unreadOnly: $unreadOnly }\n    ) {\n      data {\n        ...NotificationItem\n      }\n      unreadCount\n      total\n      totalPages\n    }\n  }\n": types.MyNotificationsDocument,
     "\n  mutation MarkNotificationAsRead($id: ID!) {\n    markNotificationAsRead(id: $id) {\n      id\n      readAt\n    }\n  }\n": types.MarkNotificationAsReadDocument,
     "\n  mutation MarkAllNotificationsAsRead {\n    markAllNotificationsAsRead\n  }\n": types.MarkAllNotificationsAsReadDocument,
     "\n  fragment ScheduleItem on TechnicianSchedule {\n    id\n    technicianId\n    shiftId\n    absenceReasonId\n    scheduleDate\n    weekNumber\n    year\n    notes\n    isActive\n    shift {\n      id\n      name\n      startTime\n      endTime\n    }\n    absenceReason {\n      id\n      name\n      isActive\n      maxPerWeek\n    }\n    technician {\n      id\n      fullName\n    }\n  }\n": types.ScheduleItemFragmentDoc,
     "\n  \n  query GetWeekSchedule($weekNumber: Int!, $year: Int!) {\n    weekSchedule(weekNumber: $weekNumber, year: $year) {\n      weekNumber\n      year\n      totalAssignments\n      totalAbsences\n      totalWorkDays\n      schedules {\n        ...ScheduleItem\n      }\n    }\n  }\n": types.GetWeekScheduleDocument,
-    "\n  query GetScheduleTechnicians {\n    techniciansActive {\n      id\n      user {\n        id\n        fullName\n        employeeNumber\n      }\n      position {\n        name\n      }\n    }\n  }\n": types.GetScheduleTechniciansDocument,
+    "\n  query GetScheduleTechnicians {\n    techniciansWithDeleted {\n      id\n      user {\n        id\n        fullName\n        employeeNumber\n      }\n      position {\n        name\n      }\n    }\n  }\n": types.GetScheduleTechniciansDocument,
     "\n  query GetAbsenceReasonsActive {\n    absenceReasonsActive {\n      id\n      name\n      isActive\n      maxPerWeek\n    }\n  }\n": types.GetAbsenceReasonsActiveDocument,
     "\n  \n  mutation AssignWeekSchedule($input: AssignWeekScheduleInput!) {\n    assignWeekSchedule(input: $input) {\n      ...ScheduleItem\n    }\n  }\n": types.AssignWeekScheduleDocument,
     "\n  \n  mutation CreateTechnicianSchedule($input: CreateScheduleInput!) {\n    createTechnicianSchedule(input: $input) {\n      ...ScheduleItem\n    }\n  }\n": types.CreateTechnicianScheduleDocument,
     "\n  \n  mutation UpdateTechnicianSchedule($id: ID!, $input: UpdateScheduleInput!) {\n    updateTechnicianSchedule(id: $id, input: $input) {\n      ...ScheduleItem\n    }\n  }\n": types.UpdateTechnicianScheduleDocument,
     "\n  mutation DeleteTechnicianSchedule($id: ID!) {\n    deleteTechnicianSchedule(id: $id)\n  }\n": types.DeleteTechnicianScheduleDocument,
     "\n  \n  mutation CopyWeekSchedules($input: CopyWeekSchedulesInput!) {\n    copyWeekSchedules(input: $input) {\n      ...ScheduleItem\n    }\n  }\n": types.CopyWeekSchedulesDocument,
+    "\n  \n  query GetTechnicianWeekSchedule($technicianId: ID!, $weekNumber: Int!, $year: Int!) {\n    technicianWeekSchedule(technicianId: $technicianId, weekNumber: $weekNumber, year: $year) {\n      ...ScheduleItem\n    }\n  }\n": types.GetTechnicianWeekScheduleDocument,
+    "\n  \n  query GetTechnicians {\n    techniciansActive {\n      ...TechnicianBasic\n    }\n  }\n": types.GetTechniciansDocument,
+    "\n  query GetTechniciansData {\n    techniciansWithDeleted {\n      id\n      isActive\n      address\n      allergies\n      birthDate\n      bloodType\n      childrenCount\n      education\n      emergencyContactName\n      emergencyContactPhone\n      emergencyContactRelationship\n      hireDate\n      nss\n      pantsSize\n      rfc\n      shirtSize\n      shoeSize\n      transportRoute\n      vacationPeriod\n      user {\n        id\n        firstName\n        lastName\n        fullName\n        employeeNumber\n        email\n        phone\n        departmentId\n      }\n      position {\n        id\n        name\n      }\n    }\n    departmentsWithDeleted {\n      id\n      name\n    }\n    positionsWithDeleted {\n      id\n      name\n    }\n    rolesWithDeleted {\n      id\n      name\n    }\n  }\n": types.GetTechniciansDataDocument,
+    "\nquery GetTechnicianDetail($id: ID!) {\ntechnician(id: $id) {\n    id\n    isActive\n      address\n      allergies\n      birthDate\n      bloodType\n      childrenCount\n      education\n      emergencyContactName\n      emergencyContactPhone\n      emergencyContactRelationship\n      hireDate\n      nss\n      pantsSize\n      rfc\n      shirtSize\n      shoeSize\n      transportRoute\n      vacationPeriod\n      user {\n        id\n        fullName\n        employeeNumber\n        email\n        phone\n        department {\n          id\n          name\n        }\n      }\n      position {\n        id\n        name\n      }\n    }\n  }\n": types.GetTechnicianDetailDocument,
+    "\n  mutation CreateTechnicianProfile($input: CreateTechnicianInput!) {\n    createTechnician(input: $input) {\n      id\n    }\n  }\n": types.CreateTechnicianProfileDocument,
+    "\n  mutation UpdateTechnicianProfile($id: ID!, $input: UpdateTechnicianInput!) {\n    updateTechnician(id: $id, input: $input) {\n      id\n    }\n  }\n": types.UpdateTechnicianProfileDocument,
+    "\n  mutation ActivateTechnician($id: ID!) {\n    activateTechnician(id: $id) {\n      id\n      isActive\n    }\n  }\n": types.ActivateTechnicianDocument,
+    "\n  mutation DeactivateTechnician($id: ID!) {\n    deactivateTechnician(id: $id)\n  }\n": types.DeactivateTechnicianDocument,
+    "\n  query GetRequestersData {\n    usersWithDeleted {\n      id\n      employeeNumber\n      firstName\n      lastName\n      fullName\n      email\n      phone\n      isActive\n      department {\n        id\n        name\n      }\n      role {\n        id\n        name\n      }\n    }\n    departmentsWithDeleted {\n      id\n      name\n    }\n    rolesWithDeleted {\n      id\n      name\n    }\n  }\n": types.GetRequestersDataDocument,
+    "\n  mutation CreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      id\n      fullName\n    }\n  }\n": types.CreateUserDocument,
+    "\n  mutation UpdateUser($id: ID!, $input: UpdateUserInput!) {\n    updateUser(id: $id, input: $input) {\n      id\n      fullName\n    }\n  }\n": types.UpdateUserDocument,
+    "\n  mutation DeactivateUser($id: ID!) {\n    deactivateUser(id: $id)\n  }\n": types.DeactivateUserDocument,
+    "\n  mutation ActivateUser($id: ID!) {\n    activateUser(id: $id)\n  }\n": types.ActivateUserDocument,
     "\n  \n  \n  \n  \n  fragment WorkOrderItem on WorkOrder {\n    id\n    folio\n    description\n    status\n    priority\n    maintenanceType\n    stopType\n    assignedShiftId\n    machineId\n    createdAt\n    isFullySigned\n    area {\n      ...AreaBasic\n    }\n    subArea {\n      ...SubAreaBasic\n    }\n    machine {\n      ...MachineBasic\n    }\n    requester {\n      ...UserBasic\n    }\n    technicians {\n      isLead\n      technician {\n        ...UserBasic\n      }\n    }\n  }\n": types.WorkOrderItemFragmentDoc,
     "\n  \n  query MyRequestedWorkOrders {\n    myRequestedWorkOrders {\n      ...WorkOrderItem\n    }\n  }\n": types.MyRequestedWorkOrdersDocument,
     "\n  \n  query MyAssignedWorkOrders {\n    myAssignedWorkOrders {\n      ...WorkOrderItem\n    }\n  }\n": types.MyAssignedWorkOrdersDocument,
@@ -145,15 +235,107 @@ export function gql(source: "\n  \n  query Me {\n    me {\n      ...UserBasic\n 
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  \n  query GetTechnicians {\n    techniciansActive {\n      ...TechnicianBasic\n    }\n  }\n"): (typeof documents)["\n  \n  query GetTechnicians {\n    techniciansActive {\n      ...TechnicianBasic\n    }\n  }\n"];
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
 export function gql(source: "\n  query GetShifts {\n    shiftsActive {\n      id\n      name\n      startTime\n      endTime\n      isActive\n    }\n  }\n"): (typeof documents)["\n  query GetShifts {\n    shiftsActive {\n      id\n      name\n      startTime\n      endTime\n      isActive\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  \n  query GetMachines {\n    machinesActive {\n      ...MachineBasic\n      subAreaId\n    }\n  }\n"): (typeof documents)["\n  \n  query GetMachines {\n    machinesActive {\n      ...MachineBasic\n      subAreaId\n    }\n  }\n"];
+export function gql(source: "\n  query GetMaterials {\n    materialsWithDeleted {\n      id\n      description\n      brand\n      manufacturer\n      model\n      partNumber\n      sku\n      unitOfMeasure\n      isActive\n      createdAt\n    }\n  }\n"): (typeof documents)["\n  query GetMaterials {\n    materialsWithDeleted {\n      id\n      description\n      brand\n      manufacturer\n      model\n      partNumber\n      sku\n      unitOfMeasure\n      isActive\n      createdAt\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation CreateMaterial($input: CreateMaterialInput!) {\n    createMaterial(input: $input) {\n      id\n      description\n      isActive\n    }\n  }\n"): (typeof documents)["\n  mutation CreateMaterial($input: CreateMaterialInput!) {\n    createMaterial(input: $input) {\n      id\n      description\n      isActive\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation UpdateMaterial($id: ID!, $input: UpdateMaterialInput!) {\n    updateMaterial(id: $id, input: $input) {\n      id\n      description\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateMaterial($id: ID!, $input: UpdateMaterialInput!) {\n    updateMaterial(id: $id, input: $input) {\n      id\n      description\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation ActivateMaterial($id: ID!) {\n    activateMaterial(id: $id) {\n      id\n      isActive\n    }\n  }\n"): (typeof documents)["\n  mutation ActivateMaterial($id: ID!) {\n    activateMaterial(id: $id) {\n      id\n      isActive\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation DeactivateMaterial($id: ID!) {\n    deactivateMaterial(id: $id)\n  }\n"): (typeof documents)["\n  mutation DeactivateMaterial($id: ID!) {\n    deactivateMaterial(id: $id)\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  \n  query GetSpareParts {\n    sparePartsWithDeleted {\n      id\n      partNumber\n      brand\n      model\n      supplier\n      unitOfMeasure\n      isActive\n      createdAt\n      machine {\n        ...MachineBasic\n      }\n    }\n  }\n"): (typeof documents)["\n  \n  query GetSpareParts {\n    sparePartsWithDeleted {\n      id\n      partNumber\n      brand\n      model\n      supplier\n      unitOfMeasure\n      isActive\n      createdAt\n      machine {\n        ...MachineBasic\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation CreateSparePart($input: CreateSparePartInput!) {\n    createSparePart(input: $input) {\n      id\n      partNumber\n      isActive\n    }\n  }\n"): (typeof documents)["\n  mutation CreateSparePart($input: CreateSparePartInput!) {\n    createSparePart(input: $input) {\n      id\n      partNumber\n      isActive\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation UpdateSparePart($id: ID!, $input: UpdateSparePartInput!) {\n    updateSparePart(id: $id, input: $input) {\n      id\n      partNumber\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateSparePart($id: ID!, $input: UpdateSparePartInput!) {\n    updateSparePart(id: $id, input: $input) {\n      id\n      partNumber\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation ActivateSparePart($id: ID!) {\n    activateSparePart(id: $id) {\n      id\n      isActive\n    }\n  }\n"): (typeof documents)["\n  mutation ActivateSparePart($id: ID!) {\n    activateSparePart(id: $id) {\n      id\n      isActive\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation DeactivateSparePart($id: ID!) {\n    deactivateSparePart(id: $id)\n  }\n"): (typeof documents)["\n  mutation DeactivateSparePart($id: ID!) {\n    deactivateSparePart(id: $id)\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetPositions {\n    positionsWithDeleted {\n      id\n      name\n      description\n      isActive\n      createdAt\n    }\n  }\n"): (typeof documents)["\n  query GetPositions {\n    positionsWithDeleted {\n      id\n      name\n      description\n      isActive\n      createdAt\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation CreatePosition($input: CreatePositionInput!) {\n    createPosition(input: $input) {\n      id\n      name\n      isActive\n    }\n  }\n"): (typeof documents)["\n  mutation CreatePosition($input: CreatePositionInput!) {\n    createPosition(input: $input) {\n      id\n      name\n      isActive\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation UpdatePosition($id: ID!, $input: UpdatePositionInput!) {\n    updatePosition(id: $id, input: $input) {\n      id\n      name\n      description\n    }\n  }\n"): (typeof documents)["\n  mutation UpdatePosition($id: ID!, $input: UpdatePositionInput!) {\n    updatePosition(id: $id, input: $input) {\n      id\n      name\n      description\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation ActivatePosition($id: ID!) {\n    activatePosition(id: $id) {\n      id\n      isActive\n    }\n  }\n"): (typeof documents)["\n  mutation ActivatePosition($id: ID!) {\n    activatePosition(id: $id) {\n      id\n      isActive\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation DeactivatePosition($id: ID!) {\n    deactivatePosition(id: $id)\n  }\n"): (typeof documents)["\n  mutation DeactivatePosition($id: ID!) {\n    deactivatePosition(id: $id)\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetShiftsAll {\n    shiftsWithDeleted {\n      id\n      name\n      startTime\n      endTime\n      isActive\n      createdAt\n    }\n  }\n"): (typeof documents)["\n  query GetShiftsAll {\n    shiftsWithDeleted {\n      id\n      name\n      startTime\n      endTime\n      isActive\n      createdAt\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation CreateShift($input: CreateShiftInput!) {\n    createShift(input: $input) {\n      id\n      name\n      isActive\n    }\n  }\n"): (typeof documents)["\n  mutation CreateShift($input: CreateShiftInput!) {\n    createShift(input: $input) {\n      id\n      name\n      isActive\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation UpdateShift($id: ID!, $input: UpdateShiftInput!) {\n    updateShift(id: $id, input: $input) {\n      id\n      name\n      startTime\n      endTime\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateShift($id: ID!, $input: UpdateShiftInput!) {\n    updateShift(id: $id, input: $input) {\n      id\n      name\n      startTime\n      endTime\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation ActivateShift($id: ID!) {\n    activateShift(id: $id) {\n      id\n      isActive\n    }\n  }\n"): (typeof documents)["\n  mutation ActivateShift($id: ID!) {\n    activateShift(id: $id) {\n      id\n      isActive\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation DeactivateShift($id: ID!) {\n    deactivateShift(id: $id)\n  }\n"): (typeof documents)["\n  mutation DeactivateShift($id: ID!) {\n    deactivateShift(id: $id)\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetDepartments {\n    departmentsWithDeleted {\n      id\n      name\n      description\n      isActive\n      createdAt\n    }\n  }\n"): (typeof documents)["\n  query GetDepartments {\n    departmentsWithDeleted {\n      id\n      name\n      description\n      isActive\n      createdAt\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation CreateDepartment($input: CreateDepartmentInput!) {\n    createDepartment(input: $input) {\n      id\n      name\n      isActive\n    }\n  }\n"): (typeof documents)["\n  mutation CreateDepartment($input: CreateDepartmentInput!) {\n    createDepartment(input: $input) {\n      id\n      name\n      isActive\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation UpdateDepartment($id: ID!, $input: UpdateDepartmentInput!) {\n    updateDepartment(id: $id, input: $input) {\n      id\n      name\n      description\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateDepartment($id: ID!, $input: UpdateDepartmentInput!) {\n    updateDepartment(id: $id, input: $input) {\n      id\n      name\n      description\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation ActivateDepartment($id: ID!) {\n    activateDepartment(id: $id) {\n      id\n      isActive\n    }\n  }\n"): (typeof documents)["\n  mutation ActivateDepartment($id: ID!) {\n    activateDepartment(id: $id) {\n      id\n      isActive\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation DeactivateDepartment($id: ID!) {\n    deactivateDepartment(id: $id)\n  }\n"): (typeof documents)["\n  mutation DeactivateDepartment($id: ID!) {\n    deactivateDepartment(id: $id)\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -193,7 +375,7 @@ export function gql(source: "\n  fragment SubAreaBasic on SubArea {\n    id\n   
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  fragment MachineBasic on Machine {\n    id\n    name\n    code\n    serialNumber\n    isActive\n  }\n"): (typeof documents)["\n  fragment MachineBasic on Machine {\n    id\n    name\n    code\n    serialNumber\n    isActive\n  }\n"];
+export function gql(source: "\n  fragment MachineBasic on Machine {\n    id\n    code\n    name\n    description\n    brand\n    model\n    serialNumber\n    installationDate\n    machinePhotoUrl\n    operationalManualUrl\n    isActive\n    subAreaId\n    subArea {\n      id\n      name\n      area {\n        id\n        name\n        type\n      }\n    }\n    createdAt\n    updatedAt\n  }\n"): (typeof documents)["\n  fragment MachineBasic on Machine {\n    id\n    code\n    name\n    description\n    brand\n    model\n    serialNumber\n    installationDate\n    machinePhotoUrl\n    operationalManualUrl\n    isActive\n    subAreaId\n    subArea {\n      id\n      name\n      area {\n        id\n        name\n        type\n      }\n    }\n    createdAt\n    updatedAt\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -202,6 +384,42 @@ export function gql(source: "\n  fragment PositionBasic on Position {\n    id\n 
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  \n  \n  fragment TechnicianBasic on Technician {\n    id\n    isActive\n    user {\n      ...UserBasic\n    }\n    position {\n      ...PositionBasic\n    }\n  }\n"): (typeof documents)["\n  \n  \n  fragment TechnicianBasic on Technician {\n    id\n    isActive\n    user {\n      ...UserBasic\n    }\n    position {\n      ...PositionBasic\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  \n  query GetMachinesPageData {\n    machines {\n      ...MachineBasic\n    }\n    areasActive {\n      id\n      name\n      type\n    }\n    subAreasActive {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  \n  query GetMachinesPageData {\n    machines {\n      ...MachineBasic\n    }\n    areasActive {\n      id\n      name\n      type\n    }\n    subAreasActive {\n      id\n      name\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  \n  query GetMachine($id: ID!) {\n    machine(id: $id) {\n      ...MachineBasic\n    }\n  }\n"): (typeof documents)["\n  \n  query GetMachine($id: ID!) {\n    machine(id: $id) {\n      ...MachineBasic\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetMachineSpareParts($id: ID!) {\n    machine(id: $id) {\n      id\n      name\n      code\n      spareParts {\n        id\n        partNumber\n        brand\n        model\n        supplier\n        unitOfMeasure\n        isActive\n        createdAt\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetMachineSpareParts($id: ID!) {\n    machine(id: $id) {\n      id\n      name\n      code\n      spareParts {\n        id\n        partNumber\n        brand\n        model\n        supplier\n        unitOfMeasure\n        isActive\n        createdAt\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetMachineWorkOrders($id: ID!) {\n    machine(id: $id) {\n      id\n      name\n      code\n      workOrders {\n        id\n        folio\n        description\n        status\n        priority\n        maintenanceType\n        startDate\n        endDate\n        createdAt\n        requester {\n          id\n          fullName\n        }\n        area {\n          id\n          name\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetMachineWorkOrders($id: ID!) {\n    machine(id: $id) {\n      id\n      name\n      code\n      workOrders {\n        id\n        folio\n        description\n        status\n        priority\n        maintenanceType\n        startDate\n        endDate\n        createdAt\n        requester {\n          id\n          fullName\n        }\n        area {\n          id\n          name\n        }\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetMachineMaterialRequests($id: ID!) {\n    machine(id: $id) {\n      id\n      name\n      code\n      materialRequests {\n        id\n        folio\n        requestText\n        priority\n        justification\n        isGenericOrAlternativeModel\n        suggestedSupplier\n        createdAt\n        materials {\n          id\n          quantity\n          importance\n          material {\n            id\n            description\n            partNumber\n            brand\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetMachineMaterialRequests($id: ID!) {\n    machine(id: $id) {\n      id\n      name\n      code\n      materialRequests {\n        id\n        folio\n        requestText\n        priority\n        justification\n        isGenericOrAlternativeModel\n        suggestedSupplier\n        createdAt\n        materials {\n          id\n          quantity\n          importance\n          material {\n            id\n            description\n            partNumber\n            brand\n          }\n        }\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  \n  mutation CreateMachine($input: CreateMachineInput!) {\n    createMachine(input: $input) {\n      ...MachineBasic\n    }\n  }\n"): (typeof documents)["\n  \n  mutation CreateMachine($input: CreateMachineInput!) {\n    createMachine(input: $input) {\n      ...MachineBasic\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  \n  mutation UpdateMachine($id: ID!, $input: UpdateMachineInput!) {\n    updateMachine(id: $id, input: $input) {\n      ...MachineBasic\n    }\n  }\n"): (typeof documents)["\n  \n  mutation UpdateMachine($id: ID!, $input: UpdateMachineInput!) {\n    updateMachine(id: $id, input: $input) {\n      ...MachineBasic\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation DeactivateMachine($id: ID!) {\n    deactivateMachine(id: $id)\n  }\n"): (typeof documents)["\n  mutation DeactivateMachine($id: ID!) {\n    deactivateMachine(id: $id)\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  \n  mutation ActivateMachine($id: ID!) {\n    activateMachine(id: $id) {\n      ...MachineBasic\n    }\n  }\n"): (typeof documents)["\n  \n  mutation ActivateMachine($id: ID!) {\n    activateMachine(id: $id) {\n      ...MachineBasic\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -229,7 +447,7 @@ export function gql(source: "\n  \n  query GetWeekSchedule($weekNumber: Int!, $y
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query GetScheduleTechnicians {\n    techniciansActive {\n      id\n      user {\n        id\n        fullName\n        employeeNumber\n      }\n      position {\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetScheduleTechnicians {\n    techniciansActive {\n      id\n      user {\n        id\n        fullName\n        employeeNumber\n      }\n      position {\n        name\n      }\n    }\n  }\n"];
+export function gql(source: "\n  query GetScheduleTechnicians {\n    techniciansWithDeleted {\n      id\n      user {\n        id\n        fullName\n        employeeNumber\n      }\n      position {\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetScheduleTechnicians {\n    techniciansWithDeleted {\n      id\n      user {\n        id\n        fullName\n        employeeNumber\n      }\n      position {\n        name\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -254,6 +472,58 @@ export function gql(source: "\n  mutation DeleteTechnicianSchedule($id: ID!) {\n
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  \n  mutation CopyWeekSchedules($input: CopyWeekSchedulesInput!) {\n    copyWeekSchedules(input: $input) {\n      ...ScheduleItem\n    }\n  }\n"): (typeof documents)["\n  \n  mutation CopyWeekSchedules($input: CopyWeekSchedulesInput!) {\n    copyWeekSchedules(input: $input) {\n      ...ScheduleItem\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  \n  query GetTechnicianWeekSchedule($technicianId: ID!, $weekNumber: Int!, $year: Int!) {\n    technicianWeekSchedule(technicianId: $technicianId, weekNumber: $weekNumber, year: $year) {\n      ...ScheduleItem\n    }\n  }\n"): (typeof documents)["\n  \n  query GetTechnicianWeekSchedule($technicianId: ID!, $weekNumber: Int!, $year: Int!) {\n    technicianWeekSchedule(technicianId: $technicianId, weekNumber: $weekNumber, year: $year) {\n      ...ScheduleItem\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  \n  query GetTechnicians {\n    techniciansActive {\n      ...TechnicianBasic\n    }\n  }\n"): (typeof documents)["\n  \n  query GetTechnicians {\n    techniciansActive {\n      ...TechnicianBasic\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetTechniciansData {\n    techniciansWithDeleted {\n      id\n      isActive\n      address\n      allergies\n      birthDate\n      bloodType\n      childrenCount\n      education\n      emergencyContactName\n      emergencyContactPhone\n      emergencyContactRelationship\n      hireDate\n      nss\n      pantsSize\n      rfc\n      shirtSize\n      shoeSize\n      transportRoute\n      vacationPeriod\n      user {\n        id\n        firstName\n        lastName\n        fullName\n        employeeNumber\n        email\n        phone\n        departmentId\n      }\n      position {\n        id\n        name\n      }\n    }\n    departmentsWithDeleted {\n      id\n      name\n    }\n    positionsWithDeleted {\n      id\n      name\n    }\n    rolesWithDeleted {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query GetTechniciansData {\n    techniciansWithDeleted {\n      id\n      isActive\n      address\n      allergies\n      birthDate\n      bloodType\n      childrenCount\n      education\n      emergencyContactName\n      emergencyContactPhone\n      emergencyContactRelationship\n      hireDate\n      nss\n      pantsSize\n      rfc\n      shirtSize\n      shoeSize\n      transportRoute\n      vacationPeriod\n      user {\n        id\n        firstName\n        lastName\n        fullName\n        employeeNumber\n        email\n        phone\n        departmentId\n      }\n      position {\n        id\n        name\n      }\n    }\n    departmentsWithDeleted {\n      id\n      name\n    }\n    positionsWithDeleted {\n      id\n      name\n    }\n    rolesWithDeleted {\n      id\n      name\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\nquery GetTechnicianDetail($id: ID!) {\ntechnician(id: $id) {\n    id\n    isActive\n      address\n      allergies\n      birthDate\n      bloodType\n      childrenCount\n      education\n      emergencyContactName\n      emergencyContactPhone\n      emergencyContactRelationship\n      hireDate\n      nss\n      pantsSize\n      rfc\n      shirtSize\n      shoeSize\n      transportRoute\n      vacationPeriod\n      user {\n        id\n        fullName\n        employeeNumber\n        email\n        phone\n        department {\n          id\n          name\n        }\n      }\n      position {\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\nquery GetTechnicianDetail($id: ID!) {\ntechnician(id: $id) {\n    id\n    isActive\n      address\n      allergies\n      birthDate\n      bloodType\n      childrenCount\n      education\n      emergencyContactName\n      emergencyContactPhone\n      emergencyContactRelationship\n      hireDate\n      nss\n      pantsSize\n      rfc\n      shirtSize\n      shoeSize\n      transportRoute\n      vacationPeriod\n      user {\n        id\n        fullName\n        employeeNumber\n        email\n        phone\n        department {\n          id\n          name\n        }\n      }\n      position {\n        id\n        name\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation CreateTechnicianProfile($input: CreateTechnicianInput!) {\n    createTechnician(input: $input) {\n      id\n    }\n  }\n"): (typeof documents)["\n  mutation CreateTechnicianProfile($input: CreateTechnicianInput!) {\n    createTechnician(input: $input) {\n      id\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation UpdateTechnicianProfile($id: ID!, $input: UpdateTechnicianInput!) {\n    updateTechnician(id: $id, input: $input) {\n      id\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateTechnicianProfile($id: ID!, $input: UpdateTechnicianInput!) {\n    updateTechnician(id: $id, input: $input) {\n      id\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation ActivateTechnician($id: ID!) {\n    activateTechnician(id: $id) {\n      id\n      isActive\n    }\n  }\n"): (typeof documents)["\n  mutation ActivateTechnician($id: ID!) {\n    activateTechnician(id: $id) {\n      id\n      isActive\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation DeactivateTechnician($id: ID!) {\n    deactivateTechnician(id: $id)\n  }\n"): (typeof documents)["\n  mutation DeactivateTechnician($id: ID!) {\n    deactivateTechnician(id: $id)\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetRequestersData {\n    usersWithDeleted {\n      id\n      employeeNumber\n      firstName\n      lastName\n      fullName\n      email\n      phone\n      isActive\n      department {\n        id\n        name\n      }\n      role {\n        id\n        name\n      }\n    }\n    departmentsWithDeleted {\n      id\n      name\n    }\n    rolesWithDeleted {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query GetRequestersData {\n    usersWithDeleted {\n      id\n      employeeNumber\n      firstName\n      lastName\n      fullName\n      email\n      phone\n      isActive\n      department {\n        id\n        name\n      }\n      role {\n        id\n        name\n      }\n    }\n    departmentsWithDeleted {\n      id\n      name\n    }\n    rolesWithDeleted {\n      id\n      name\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation CreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      id\n      fullName\n    }\n  }\n"): (typeof documents)["\n  mutation CreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      id\n      fullName\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation UpdateUser($id: ID!, $input: UpdateUserInput!) {\n    updateUser(id: $id, input: $input) {\n      id\n      fullName\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateUser($id: ID!, $input: UpdateUserInput!) {\n    updateUser(id: $id, input: $input) {\n      id\n      fullName\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation DeactivateUser($id: ID!) {\n    deactivateUser(id: $id)\n  }\n"): (typeof documents)["\n  mutation DeactivateUser($id: ID!) {\n    deactivateUser(id: $id)\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation ActivateUser($id: ID!) {\n    activateUser(id: $id)\n  }\n"): (typeof documents)["\n  mutation ActivateUser($id: ID!) {\n    activateUser(id: $id)\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

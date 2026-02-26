@@ -48,7 +48,7 @@ export const GET_WEEK_SCHEDULE_QUERY = gql`
 
 export const GET_SCHEDULE_TECHNICIANS_QUERY = gql`
   query GetScheduleTechnicians {
-    techniciansActive {
+    techniciansWithDeleted {
       id
       user {
         id
@@ -110,6 +110,15 @@ export const COPY_WEEK_SCHEDULES_MUTATION = gql`
   ${SCHEDULE_ITEM_FRAGMENT}
   mutation CopyWeekSchedules($input: CopyWeekSchedulesInput!) {
     copyWeekSchedules(input: $input) {
+      ...ScheduleItem
+    }
+  }
+`;
+
+export const GET_TECHNICIAN_WEEK_SCHEDULE_QUERY = gql`
+  ${SCHEDULE_ITEM_FRAGMENT}
+  query GetTechnicianWeekSchedule($technicianId: ID!, $weekNumber: Int!, $year: Int!) {
+    technicianWeekSchedule(technicianId: $technicianId, weekNumber: $weekNumber, year: $year) {
       ...ScheduleItem
     }
   }
