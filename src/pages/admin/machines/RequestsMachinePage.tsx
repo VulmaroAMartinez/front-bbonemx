@@ -165,16 +165,23 @@ export default function RequestsMachinePage() {
                     {requests.map((req) => (
                         <Card key={req.id} className="bg-card hover:shadow-md transition-shadow">
                             <CardContent className="p-4 space-y-3">
-                                {/* Fila: Folio + Prioridad */}
+                                {/* Fila: Folio + Prioridad + Importancia */}
                                 <div className="flex items-center justify-between gap-2 flex-wrap">
                                     <span className="font-mono font-semibold text-sm text-primary">
                                         {req.folio}
                                     </span>
-                                    <RequestPriorityBadge priority={req.priority} />
+                                    <div className="flex items-center gap-2">
+                                        <RequestPriorityBadge priority={req.priority} />
+                                        {req.importance && (
+                                            <ImportanceBadge importance={req.importance} />
+                                        )}
+                                    </div>
                                 </div>
 
-                                {/* Texto de solicitud */}
-                                <p className="text-sm text-foreground line-clamp-2">{req.requestText}</p>
+                                {/* Texto de solicitud / comentarios */}
+                                <p className="text-sm text-foreground line-clamp-2">
+                                    {req.comments || 'Sin comentarios'}
+                                </p>
 
                                 {/* Justificación */}
                                 {req.justification && (
@@ -185,7 +192,7 @@ export default function RequestsMachinePage() {
 
                                 {/* Indicadores */}
                                 <div className="flex flex-wrap gap-1.5">
-                                    {req.isGenericOrAlternativeModel && (
+                                    {req.isGenericAllowed && (
                                         <span className="text-[10px] bg-chart-5/10 text-chart-5 border border-chart-5/20 px-1.5 py-0.5 rounded-full font-medium">
                                             Acepta genérico/alternativo
                                         </span>
@@ -197,42 +204,41 @@ export default function RequestsMachinePage() {
                                     )}
                                 </div>
 
-                                {/* Materiales */}
-                                {req.materials && req.materials.length > 0 && (
+                                {/* Materiales solicitados */}
+                                {req.items && req.items.length > 0 && (
                                     <div className="pt-2 border-t border-border/50 space-y-2">
                                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                            Materiales ({req.materials.length})
+                                            Materiales ({req.items.length})
                                         </p>
                                         <div className="space-y-1.5">
-                                            {req.materials.map((mat) => (
+                                            {req.items.map((item) => (
                                                 <div
-                                                    key={mat.id}
+                                                    key={item.id}
                                                     className="flex items-start gap-2 bg-muted/30 rounded-md p-2"
                                                 >
                                                     <Box className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-xs text-foreground leading-tight truncate">
-                                                            {mat.material.description}
+                                                            {item.description || item.material.description}
                                                         </p>
                                                         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
                                                             <span className="text-[11px] text-muted-foreground">
-                                                                Cant: <strong>{mat.quantity}</strong>
+                                                                Cant:{' '}
+                                                                <strong>{item.requestedQuantity}</strong>{' '}
+                                                                {item.unitOfMeasure}
                                                             </span>
-                                                            {mat.material.partNumber && (
+                                                            {item.material.partNumber && (
                                                                 <span className="text-[11px] text-muted-foreground font-mono">
-                                                                    {mat.material.partNumber}
+                                                                    {item.material.partNumber}
                                                                 </span>
                                                             )}
-                                                            {mat.material.brand && (
+                                                            {item.material.brand && (
                                                                 <span className="text-[11px] text-muted-foreground">
-                                                                    {mat.material.brand}
+                                                                    {item.material.brand}
                                                                 </span>
                                                             )}
                                                         </div>
                                                     </div>
-                                                    {mat.importance && (
-                                                        <ImportanceBadge importance={mat.importance} />
-                                                    )}
                                                 </div>
                                             ))}
                                         </div>

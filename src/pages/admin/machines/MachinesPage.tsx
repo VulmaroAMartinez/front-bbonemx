@@ -7,12 +7,13 @@ import * as yup from 'yup';
 import { toast } from 'sonner';
 import {
     MachineBasicFragmentDoc,
+    GetMachinesByAreaDocument,
     GetMachinesPageDataDocument,
-    GetSubAreasByAreaDocument,
     CreateMachineDocument,
     UpdateMachineDocument,
     DeactivateMachineDocument,
     ActivateMachineDocument,
+    SubAreaBasicFragmentDoc,
 } from '@/lib/graphql/generated/graphql';
 import type { MachineBasicFragment } from '@/lib/graphql/generated/graphql';
 import { useAuth } from '@/contexts/auth-context';
@@ -79,7 +80,8 @@ import {
     ArrowUpDown,
     X,
 } from 'lucide-react';
-import { useFragment } from '@/lib/graphql/generated';
+import { useFragment as unmaskFragment } from '@/lib/graphql/generated';
+import { useAreaMachineSelector } from '@/hooks/useAreaMachineSelector';
 
 // ─── Schema de validación ───────────────────────────────────
 
@@ -87,7 +89,7 @@ const machineSchema = yup.object({
     code: yup.string().trim().required('El código es obligatorio'),
     name: yup.string().trim().required('El nombre es obligatorio'),
     areaId: yup.string().required('Seleccione un área'),
-    subAreaId: yup.string().required('Seleccione una sub-área'),
+    subAreaId: yup.string().default(''), // ← YA NO ES REQUIRED
     description: yup.string().trim().default(''),
     brand: yup.string().trim().default(''),
     model: yup.string().trim().default(''),
@@ -96,6 +98,7 @@ const machineSchema = yup.object({
     machinePhotoUrl: yup.string().trim().url('URL no válida').default(''),
     operationalManualUrl: yup.string().trim().url('URL no válida').default(''),
 });
+
 
 type MachineFormValues = yup.InferType<typeof machineSchema>;
 
@@ -111,6 +114,13 @@ const EMPTY_FORM: MachineFormValues = {
     installationDate: '',
     machinePhotoUrl: '',
     operationalManualUrl: '',
+};
+
+const getMachineLocationText = (machine: MachineBasicFragment) => {
+    if (machine.subArea) {
+        return `${machine.subArea.area.name} → ${machine.subArea.name}`;
+    }
+    return 'Sin ubicación';
 };
 
 // ─── Componente principal ───────────────────────────────────
@@ -141,13 +151,19 @@ export default function MachinesPage() {
     const [viewingMachine, setViewingMachine] = useState<MachineBasicFragment | null>(null);
     const [deactivatingMachine, setDeactivatingMachine] = useState<MachineBasicFragment | null>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [selectedAreaId, setSelectedAreaId] = useState('');
-
-    // ─── Sub-áreas query (cascada)
-    const { data: subAreasData, loading: subAreasLoading } = useQuery(
-        GetSubAreasByAreaDocument,
-        { variables: { areaId: selectedAreaId }, skip: !selectedAreaId },
-    );
+    const {
+        selectedAreaId,
+        selectedSubAreaId: _hookSubAreaId, // no usamos este, react-hook-form lo maneja
+        subAreasData,
+        machinesData: machinesByAreaData,
+        isLoadingSubAreas: subAreasLoading,
+        isLoadingMachines: machinesLoading,
+        hasSubAreas,
+        subAreasLoaded,
+        handleAreaChange: hookAreaChange,
+        handleSubAreaChange: hookSubAreaChange,
+        initWith: initSelector,
+    } = useAreaMachineSelector();
 
     // ─── Form
     const {
@@ -163,9 +179,12 @@ export default function MachinesPage() {
     });
 
     // ─── Datos derivados
-    const machines = useFragment(MachineBasicFragmentDoc, data?.machines ?? []);
+    const machines = unmaskFragment(MachineBasicFragmentDoc, data?.machines ?? []);
     const areas = data?.areasActive ?? [];
-    const subAreas = subAreasData?.subAreasByArea ?? [];
+
+    const subAreas = subAreasData?.subAreasByArea
+        ? unmaskFragment(SubAreaBasicFragmentDoc, subAreasData.subAreasByArea)
+        : [];
 
     const filteredMachines = useMemo(() => {
         let result = [...machines];
@@ -180,7 +199,10 @@ export default function MachinesPage() {
             );
         }
         if (filterAreaId !== 'all') {
-            result = result.filter((m) => m.subArea.area.id === filterAreaId);
+            result = result.filter((m) => {
+                const machineAreaId = m.areaId ?? m.subArea?.area?.id;
+                return machineAreaId === filterAreaId;
+            });
         }
         if (filterStatus === 'active') result = result.filter((m) => m.isActive);
         if (filterStatus === 'inactive') result = result.filter((m) => !m.isActive);
@@ -192,21 +214,26 @@ export default function MachinesPage() {
     // ─── Handlers
 
     const openCreateForm = () => {
+        initSelector('', '');
         setEditingMachine(null);
-        setSelectedAreaId('');
         reset(EMPTY_FORM);
         setIsFormOpen(true);
     };
 
     const openEditForm = (machine: MachineBasicFragment) => {
         setEditingMachine(machine);
-        const areaId = machine.subArea.area.id;
-        setSelectedAreaId(areaId);
+        // Obtener el área desde la relación directa o desde la sub-área
+        const areaId = machine.areaId ?? machine.subArea?.area?.id ?? '';
+        const subAreaId = machine.subAreaId ?? '';
+
+        // Inicializar el hook con los valores de la máquina
+        initSelector(areaId, subAreaId || undefined);
+
         reset({
             code: machine.code,
             name: machine.name,
             areaId,
-            subAreaId: machine.subAreaId,
+            subAreaId,
             description: machine.description ?? '',
             brand: machine.brand ?? '',
             model: machine.model ?? '',
@@ -227,18 +254,18 @@ export default function MachinesPage() {
 
     /** Al cambiar el área en el form, resetear sub-área */
     const handleAreaChange = (areaId: string) => {
-        setSelectedAreaId(areaId);
+        hookAreaChange(areaId);        // hook maneja la cascada de queries
         setValue('areaId', areaId);
-        setValue('subAreaId', '');
+        setValue('subAreaId', '');       // limpiar sub-área del form
     };
+
 
     const onSubmit = async (values: MachineFormValues) => {
         setIsSaving(true);
         try {
-            const payload = {
+            const payload: any = {
                 code: values.code,
                 name: values.name,
-                subAreaId: values.subAreaId,
                 description: values.description || undefined,
                 brand: values.brand || undefined,
                 model: values.model || undefined,
@@ -249,6 +276,15 @@ export default function MachinesPage() {
                 machinePhotoUrl: values.machinePhotoUrl || undefined,
                 operationalManualUrl: values.operationalManualUrl || undefined,
             };
+
+            // ── XOR: enviar areaId O subAreaId, nunca ambos ──
+            if (values.subAreaId) {
+                payload.subAreaId = values.subAreaId;
+                // NO enviar areaId cuando hay subAreaId
+            } else {
+                payload.areaId = values.areaId;
+                // NO enviar subAreaId cuando hay areaId directo
+            }
 
             if (editingMachine) {
                 await updateMachine({ variables: { id: editingMachine.id, input: payload } });
@@ -265,6 +301,7 @@ export default function MachinesPage() {
             setIsSaving(false);
         }
     };
+
 
     const handleToggleStatus = async (machine: MachineBasicFragment) => {
         if (machine.isActive) {
@@ -499,40 +536,43 @@ export default function MachinesPage() {
                                     />
                                     <FieldError name="areaId" />
                                 </div>
-                                <div className="space-y-1.5">
-                                    <Label>Sub-área *</Label>
-                                    <Controller
-                                        name="subAreaId"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Select
-                                                value={field.value}
-                                                onValueChange={field.onChange}
-                                                disabled={!selectedAreaId || subAreasLoading}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue
-                                                        placeholder={
-                                                            subAreasLoading
-                                                                ? 'Cargando...'
-                                                                : !selectedAreaId
-                                                                    ? 'Primero seleccione área'
-                                                                    : 'Seleccionar sub-área...'
-                                                        }
-                                                    />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {subAreas.map((sa: any) => (
-                                                        <SelectItem key={sa.id} value={sa.id}>
-                                                            {sa.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        )}
-                                    />
-                                    <FieldError name="subAreaId" />
-                                </div>
+                                {selectedAreaId && subAreasLoaded && hasSubAreas && (
+                                    <div className="space-y-1.5">
+                                        <Label>Sub-área (Opcional)</Label>
+                                        <Controller
+                                            name="subAreaId"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Select
+                                                    value={field.value}
+                                                    onValueChange={(val) => {
+                                                        field.onChange(val);
+                                                        hookSubAreaChange(val);
+                                                    }}
+                                                    disabled={subAreasLoading}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue
+                                                            placeholder={
+                                                                subAreasLoading
+                                                                    ? 'Cargando...'
+                                                                    : 'Seleccionar sub-área (opcional)...'
+                                                            }
+                                                        />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {subAreas.map((sa: any) => (
+                                                            <SelectItem key={sa.id} value={sa.id}>
+                                                                {sa.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                        />
+                                    </div>
+                                )}
+
                             </div>
                         </div>
 
@@ -707,7 +747,7 @@ function MachineCard({
                         {machine.name}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                        {machine.subArea.area.name} → {machine.subArea.name}
+                        {getMachineLocationText(machine)}
                     </p>
                 </div>
 
@@ -771,8 +811,7 @@ function MachineInfoModal({ machine, open, onOpenChange }: MachineInfoModalProps
         { label: 'Código', value: machine.code },
         { label: 'Nombre', value: machine.name },
         { label: 'Descripción', value: machine.description || '—' },
-        { label: 'Área', value: machine.subArea.area.name },
-        { label: 'Sub-área', value: machine.subArea.name },
+        { label: 'Ubicación', value: getMachineLocationText(machine) },
         { label: 'Marca', value: machine.brand || '—' },
         { label: 'Modelo', value: machine.model || '—' },
         { label: 'Número de serie', value: machine.serialNumber || '—' },

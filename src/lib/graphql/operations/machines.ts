@@ -93,16 +93,19 @@ export const GET_MACHINE_MATERIAL_REQUESTS = gql`
       materialRequests {
         id
         folio
-        requestText
+        category
         priority
+        importance
+        comments
         justification
-        isGenericOrAlternativeModel
+        isGenericAllowed
         suggestedSupplier
         createdAt
-        materials {
+        items {
           id
-          quantity
-          importance
+          requestedQuantity
+          unitOfMeasure
+          description
           material {
             id
             description
@@ -145,6 +148,15 @@ export const ACTIVATE_MACHINE = gql`
   ${MACHINE_BASIC_FRAGMENT}
   mutation ActivateMachine($id: ID!) {
     activateMachine(id: $id) {
+      ...MachineBasic
+    }
+  }
+`;
+
+export const GET_MACHINES_BY_AREA = gql`
+  ${MACHINE_BASIC_FRAGMENT}
+  query GetMachinesByArea($areaId: ID, $subAreaId: ID) {
+    machinesByArea(areaId: $areaId, subAreaId: $subAreaId) {
       ...MachineBasic
     }
   }

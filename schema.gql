@@ -11,14 +11,6 @@ type AbsenceReason {
   updatedAt: DateTime!
 }
 
-input AddMaterialToRequestInput {
-  importance: MaterialRequestImportance
-  materialId: ID!
-  maximumStock: Int
-  minimumStock: Int
-  quantity: Int!
-}
-
 input AddWorkOrderMaterialInput {
   materialId: ID!
   notes: String
@@ -51,10 +43,15 @@ type AreaMetric {
 
 """Tipo de área"""
 enum AreaType {
-  """Área operativa - Puede tener sub-áreas y máquinas"""
+  """Área operativa - Puede tener sub-áreas y máquinas directas"""
   OPERATIONAL
 
-  """Área de servicio - No tiene sub-áreas"""
+  """
+  Área de producción - Puede tener líneas (sub-áreas) y máquinas directas
+  """
+  PRODUCTION
+
+  """Área de servicio - Máquinas directas, sin sub-áreas requeridas"""
   SERVICE
 }
 
@@ -165,6 +162,8 @@ input CreateFindingInput {
 }
 
 input CreateMachineInput {
+  """ID del área (si la máquina pertenece directamente al área)"""
+  areaId: ID
   brand: String
   code: String!
   description: String
@@ -174,7 +173,9 @@ input CreateMachineInput {
   name: String!
   operationalManualUrl: String
   serialNumber: String
-  subAreaId: String!
+
+  """ID de la sub-área (si la máquina pertenece a una sub-área)"""
+  subAreaId: ID
 }
 
 input CreateMaterialInput {
@@ -188,13 +189,32 @@ input CreateMaterialInput {
 }
 
 input CreateMaterialRequestInput {
+  boss: String!
+  category: String!
   comments: String
-  isGenericOrAlternativeModel: Boolean = false
+  importance: String!
+  isGenericAllowed: Boolean!
+  items: [CreateMaterialRequestItemInput!]! = []
   justification: String
   machineId: ID!
-  priority: MaterialRequestPriority!
-  requestText: String!
+  priority: String!
+  requesterId: ID!
   suggestedSupplier: String
+}
+
+input CreateMaterialRequestItemInput {
+  brand: String
+  description: String
+  materialId: ID
+  materialRequestId: ID!
+  model: String
+  partNumber: String
+  proposedMaxStock: Float
+  proposedMinStock: Float
+  requestedQuantity: Float!
+  sku: String
+  sparePartId: ID
+  unitOfMeasure: String!
 }
 
 input CreatePositionInput {
@@ -503,6 +523,11 @@ type LoginResponse {
 }
 
 type Machine {
+  """Área directa (null si pertenece a sub-área)"""
+  area: Area
+
+  """ID del área directa (null si pertenece a sub-área)"""
+  areaId: ID
   brand: String
   code: String!
   createdAt: DateTime!
@@ -511,13 +536,20 @@ type Machine {
   installationDate: DateTime
   isActive: Boolean!
   machinePhotoUrl: String
+  materialRequests: [MaterialRequest!]
   model: String
   name: String!
   operationalManualUrl: String
   serialNumber: String
-  subArea: SubArea!
-  subAreaId: ID!
+  spareParts: [SparePart!]
+
+  """Sub-área (null si pertenece directamente al área)"""
+  subArea: SubArea
+
+  """ID de la sub-área (null si pertenece directamente al área)"""
+  subAreaId: ID
   updatedAt: DateTime!
+  workOrders: [WorkOrder!]
 }
 
 type MachineMetric {
@@ -556,64 +588,44 @@ type Material {
 }
 
 type MaterialRequest {
+  boss: String!
+  category: RequestCategory!
   comments: String
   createdAt: DateTime!
   folio: String!
   id: ID!
+  importance: RequestImportance!
   isActive: Boolean!
-  isGenericOrAlternativeModel: Boolean!
+  isGenericAllowed: Boolean!
+  items: [MaterialRequestItem!]!
   justification: String
   machine: Machine!
   machineId: ID!
-  materials: [MaterialRequestMaterial!]!
-  priority: MaterialRequestPriority!
-  requestText: String!
+  priority: RequestPriority!
+  requester: User!
+  requesterId: ID!
   sequence: Int!
   suggestedSupplier: String
   updatedAt: DateTime!
 }
 
-"""Importancia del material en la solicitud"""
-enum MaterialRequestImportance {
-  """Crítica"""
-  CRITICAL
-
-  """Alta"""
-  HIGH
-
-  """Baja"""
-  LOW
-
-  """Media"""
-  MEDIUM
-}
-
-type MaterialRequestMaterial {
+type MaterialRequestItem {
+  brand: String
   createdAt: DateTime!
+  description: String
   id: ID!
-  importance: MaterialRequestImportance
   material: Material!
   materialId: ID!
-  materialRequestId: ID!
-  maximumStock: Int
-  minimumStock: Int
-  quantity: Int!
+  model: String
+  partNumber: String
+  proposedMaxStock: Float
+  proposedMinStock: Float
+  requestedQuantity: Float!
+  sku: String
+  sparePart: SparePart!
+  sparePartId: ID!
+  unitOfMeasure: String!
   updatedAt: DateTime!
-}
-
-"""Prioridad de solicitud de material"""
-enum MaterialRequestPriority {
-  """Crítica"""
-  CRITICAL
-
-  """Alta"""
-  HIGH
-
-  """Baja"""
-  LOW
-
-  """Media"""
-  MEDIUM
 }
 
 type MixPoint {
@@ -636,7 +648,7 @@ type Mutation {
   activateSubArea(id: ID!): SubArea!
   activateTechnician(id: ID!): Technician!
   activateUser(id: ID!): Boolean!
-  addMaterialToRequest(input: AddMaterialToRequestInput!, materialRequestId: ID!): MaterialRequestMaterial!
+  addMaterialToRequest(input: CreateMaterialRequestItemInput!, materialRequestId: ID!): MaterialRequestItem!
   addWorkOrderMaterial(input: AddWorkOrderMaterialInput!): WorkOrderMaterial!
   addWorkOrderSparePart(input: AddWorkOrderSparePartInput!): WorkOrderSparePart!
   assignTechnician(input: AssignTechnicianInput!): WorkOrderTechnician!
@@ -945,7 +957,9 @@ type Query {
   machine(id: ID!): Machine
   machines: [Machine!]!
   machinesActive: [Machine!]!
-  machinesWithDeleted: [Machine!]!
+
+  """Búsqueda flexible de máquinas por área y/o sub-área"""
+  machinesByArea(areaId: ID, subAreaId: ID): [Machine!]!
   material(id: ID!): Material
   materialRequest(id: ID!): MaterialRequest
   materialRequestByFolio(folio: String!): MaterialRequest
@@ -1048,6 +1062,66 @@ input RegisterDeviceTokenInput {
 
   """La plataforma del dispositivo"""
   platform: DevicePlatform! = WEB
+}
+
+"""Categoría de la solicitud"""
+enum RequestCategory {
+  """Equipo"""
+  EQUIPMENT
+
+  """Material con SKU"""
+  MATERIAL_WITH_SKU
+
+  """Material noInventariado"""
+  NON_INVENTORY_MATERIAL
+
+  """Pieza de repuesto noInventariada"""
+  NON_INVENTORY_SPARE_PART
+
+  """Protección personal"""
+  PPE
+
+  """Solicitud de material con SKU"""
+  REQUEST_SKU_MATERIAL
+
+  """Solicitud de pieza de repuesto con SKU"""
+  REQUEST_SKU_SPARE_PART
+
+  """Servicio"""
+  SERVICE
+
+  """Servicio con material"""
+  SERVICE_WITH_MATERIAL
+
+  """Pieza de repuesto con SKU"""
+  SPARE_PART_WITH_SKU
+
+  """Herramientas"""
+  TOOLS
+
+  """Actualización de SKU"""
+  UPDATE_SKU
+}
+
+"""Importancia de la solicitud"""
+enum RequestImportance {
+  """Importante"""
+  IMPORTANT
+
+  """poco importante"""
+  UNIMPORTANT
+
+  """Muy importante"""
+  VERY_IMPORTANT
+}
+
+"""Prioridad de la solicitud"""
+enum RequestPriority {
+  """Programada"""
+  SCHEDULED
+
+  """Urgente"""
+  URGENT
 }
 
 type Role {
@@ -1230,6 +1304,8 @@ input UpdateFindingInput {
 }
 
 input UpdateMachineInput {
+  """ID del área (si la máquina pertenece directamente al área)"""
+  areaId: ID
   brand: String
   code: String
   description: String
@@ -1239,7 +1315,9 @@ input UpdateMachineInput {
   name: String
   operationalManualUrl: String
   serialNumber: String
-  subAreaId: String
+
+  """ID de la sub-área (si la máquina pertenece a una sub-área)"""
+  subAreaId: ID
 }
 
 input UpdateMaterialInput {
@@ -1253,12 +1331,17 @@ input UpdateMaterialInput {
 }
 
 input UpdateMaterialRequestInput {
+  boss: String
+  category: String
   comments: String
-  isGenericOrAlternativeModel: Boolean = false
+  id: ID!
+  importance: String
+  isGenericAllowed: Boolean
+  items: [CreateMaterialRequestItemInput!] = []
   justification: String
   machineId: ID
-  priority: MaterialRequestPriority
-  requestText: String
+  priority: String
+  requesterId: ID
   suggestedSupplier: String
 }
 

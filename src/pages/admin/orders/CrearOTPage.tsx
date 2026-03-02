@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useLazyQuery } from '@apollo/client/react';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {
   GetAreasDocument,
-  GetSubAreasByAreaDocument,
   GetTechniciansDocument,
   GetShiftsDocument,
-  GetMachinesPageDataDocument,
   CreateWorkOrderDocument,
   AssignWorkOrderDocument,
   UploadWorkOrderPhotoDocument,
@@ -30,6 +28,7 @@ import { PlusCircle, ArrowLeft, Loader2, CheckCircle, MapPin, ImageIcon, Trash2,
 import type { MaintenanceType, WorkOrderPriority, StopType } from '@/lib/graphql/generated/graphql';
 import { useFragment as unmaskFragment } from '@/lib/graphql/generated';
 import { useNavigate } from 'react-router-dom';
+import { useAreaMachineSelector } from '@/hooks/useAreaMachineSelector';
 
 const adminCrearOTSchema = yup.object({
   areaId: yup.string().required('El área es obligatoria.'),
@@ -75,15 +74,25 @@ export default function AdminCrearOTPage() {
   const { data: techData, loading: techLoading } = useQuery(GetTechniciansDocument);
   const { data: shiftsData } = useQuery(GetShiftsDocument);
 
-  const [getSubAreas, { data: subAreasData }] = useLazyQuery(GetSubAreasByAreaDocument);
-  const [getMachines, { data: machinesData }] = useLazyQuery(GetMachinesPageDataDocument);
+  const {
+    subAreasData,
+    machinesData: machinesByAreaData,
+    isLoadingSubAreas,
+    isLoadingMachines,
+    hasSubAreas,
+    subAreasLoaded,
+    handleAreaChange: hookAreaChange,
+    handleSubAreaChange: hookSubAreaChange,
+  } = useAreaMachineSelector();
 
   const [createWorkOrder] = useMutation(CreateWorkOrderDocument);
   const [assignWorkOrder] = useMutation(AssignWorkOrderDocument);
   const [uploadPhoto] = useMutation(UploadWorkOrderPhotoDocument);
 
   const areas = areasData?.areas ? unmaskFragment(AreaBasicFragmentDoc, areasData.areas) : [];
-  const subAreas = subAreasData?.subAreasByArea ? unmaskFragment(SubAreaBasicFragmentDoc, subAreasData.subAreasByArea) : [];
+  const subAreas = subAreasData?.subAreasByArea
+    ? unmaskFragment(SubAreaBasicFragmentDoc, subAreasData.subAreasByArea)
+    : [];
   const shifts = shiftsData?.shiftsActive || [];
   const activeTechnicians = techData?.techniciansActive ? unmaskFragment(TechnicianBasicFragmentDoc, techData.techniciansActive) : [];
 
@@ -92,7 +101,7 @@ export default function AdminCrearOTPage() {
     handleSubmit,
     setValue,
     watch,
-    setError,
+    // setError,  // ya no se usa (validación rígida eliminada)
     formState: { errors, isSubmitting },
   } = useForm<AdminCrearOTFormValues>({
     resolver: yupResolver(adminCrearOTSchema),
@@ -120,13 +129,12 @@ export default function AdminCrearOTPage() {
   const stoppageType = watch('stoppageType');
   const description = watch('description');
 
-  const allMachinesRaw = machinesData?.machines || [];
-  const filteredMachinesRaw = allMachinesRaw.filter((m: any) => m.subArea?.id === subAreaId);
-  const availableMachines = unmaskFragment(MachineBasicFragmentDoc, filteredMachinesRaw);
+  const availableMachines = machinesByAreaData?.machinesByArea
+    ? unmaskFragment(MachineBasicFragmentDoc, machinesByAreaData.machinesByArea)
+    : [];
 
-  const selectedArea = areas.find((a) => a.id === areaId);
-  const isOperational = selectedArea?.type === 'OPERATIONAL';
-  const showMachine = stoppageType === 'BREAKDOWN' || (isOperational && !!subAreaId);
+  const showSubAreas = !!areaId && subAreasLoaded && hasSubAreas;
+  const showMachine = !!areaId && availableMachines.length > 0;
 
   const handleSelectChange = (field: keyof AdminCrearOTFormValues, value: string) => {
     setValue(field, value, { shouldValidate: true });
@@ -136,17 +144,13 @@ export default function AdminCrearOTPage() {
     setValue('areaId', value, { shouldValidate: true });
     setValue('subAreaId', '');
     setValue('machineId', '');
-
-    const area = areas.find(a => a.id === value);
-    if (area?.type === 'OPERATIONAL') {
-      getSubAreas({ variables: { areaId: value } });
-      getMachines();
-    }
+    hookAreaChange(value);
   };
 
   const handleSubAreaChange = (value: string) => {
     setValue('subAreaId', value, { shouldValidate: true });
     setValue('machineId', '');
+    hookSubAreaChange(value);
   };
 
   const handleAddAuxiliaryTech = () => {
@@ -176,12 +180,6 @@ export default function AdminCrearOTPage() {
 
   const onSubmit = async (values: AdminCrearOTFormValues) => {
     setFormError('');
-
-    // Conditional validation for subAreaId
-    if (isOperational && !values.subAreaId) {
-      setError('subAreaId', { message: 'La sub-área es obligatoria para áreas operacionales.' });
-      return;
-    }
 
     const cleanAuxiliaryTech = auxiliaryTechnicians.filter(id => id !== '');
     const allTechIds = Array.from(new Set([values.leadTechnicianId, ...cleanAuxiliaryTech]));
@@ -307,23 +305,24 @@ export default function AdminCrearOTPage() {
               )}
             </div>
 
-            {/* Sub-area (solo si es operacional) */}
-            {isOperational && subAreas.length > 0 && (
+            {/* Sub-área (opcional, cuando el área tiene sub-áreas) */}
+            {showSubAreas && (
               <div className="space-y-2">
-                <Label htmlFor="admin-sub-area">Sub-area *</Label>
+                <Label htmlFor="admin-sub-area">Sub-área (Opcional)</Label>
                 <Select value={subAreaId} onValueChange={handleSubAreaChange}>
                   <SelectTrigger id="admin-sub-area">
-                    <SelectValue placeholder="Seleccionar sub-area" />
+                    <SelectValue
+                      placeholder={isLoadingSubAreas ? 'Cargando...' : 'Seleccionar sub-área'}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {subAreas.map((sa) => (
-                      <SelectItem key={sa.id} value={sa.id}>{sa.name}</SelectItem>
+                      <SelectItem key={sa.id} value={sa.id}>
+                        {sa.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.subAreaId && (
-                  <p className="text-xs text-destructive">{errors.subAreaId.message}</p>
-                )}
               </div>
             )}
 
@@ -498,11 +497,27 @@ export default function AdminCrearOTPage() {
 
             {showMachine && (
               <div className="space-y-2">
-                <Label>Máquina (Opcional)</Label>
-                <Select value={watch('machineId')} onValueChange={(v) => handleSelectChange('machineId', v)}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar máquina afectada" /></SelectTrigger>
+                <Label>
+                  Máquina {stoppageType === 'BREAKDOWN' ? '*' : '(Opcional)'}
+                </Label>
+                <Select
+                  value={watch('machineId')}
+                  onValueChange={(v) => handleSelectChange('machineId', v)}
+                  disabled={isLoadingMachines}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        isLoadingMachines ? 'Cargando máquinas...' : 'Seleccionar máquina'
+                      }
+                    />
+                  </SelectTrigger>
                   <SelectContent>
-                    {availableMachines.length > 0 ? availableMachines.map((m) => <SelectItem key={m.id} value={m.id}>{m.name} [{m.code}]</SelectItem>) : <SelectItem value="none" disabled>No hay máquinas</SelectItem>}
+                    {availableMachines.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name} [{m.code}]
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
