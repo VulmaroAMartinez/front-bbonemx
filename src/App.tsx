@@ -47,6 +47,10 @@ import MachinesPage from './pages/admin/machines/MachinesPage';
 import OrdersMachinePage from './pages/admin/machines/OrdersMachinePage';
 import RequestsMachinePage from './pages/admin/machines/RequestsMachinePage';
 import SparePartsMachinePage from './pages/admin/machines/SparePartsMachinePage';
+import AreasPage from './pages/admin/areas/AreasPage';
+import AreaWorkOrdersPage from './pages/admin/areas/AreaWorkOrdersPage';
+import AreaMachinesPage from './pages/admin/areas/AreaMachinesPage';
+import AreaFindingsPage from './pages/admin/areas/AreaFindingsPage';
 
 const ShellLayout = ({ title }: { title: string }) => (
   <AppShell title={title}>
@@ -84,6 +88,10 @@ function App() {
               <Route path="/maquinas/:id/ordenes" element={<OrdersMachinePage />} />
               <Route path="/maquinas/:id/solicitudes" element={<RequestsMachinePage />} />
               <Route path="/maquinas/:id/refacciones" element={<SparePartsMachinePage />} />
+              <Route path="/areas" element={<AreasPage />} />
+              <Route path="/areas/:id/ordenes" element={<AreaWorkOrdersPage />} />
+              <Route path="/areas/:id/maquinas" element={<AreaMachinesPage />} />
+              <Route path="/areas/:id/hallazgos" element={<AreaFindingsPage />} />
             </Route>
           </Route>
 
