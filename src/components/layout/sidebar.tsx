@@ -63,7 +63,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
         { href: '/admin/ordenes', label: 'Órdenes', icon: ClipboardList },
         { href: '/maquinas', label: 'Máquinas', icon: Forklift },
         { href: '/hallazgos', label: 'Hallazgos', icon: Search },
-        { href: '/admin/solicitud-material', label: 'Solicitud de material', icon: FileCog2 },
+        { href: '/solicitud-material', label: 'Solicitud de material', icon: FileCog2 },
         {
           label: 'Gestión de Técnicos',
           icon: Users,

@@ -51,6 +51,9 @@ import AreasPage from './pages/admin/areas/AreasPage';
 import AreaWorkOrdersPage from './pages/admin/areas/AreaWorkOrdersPage';
 import AreaMachinesPage from './pages/admin/areas/AreaMachinesPage';
 import AreaFindingsPage from './pages/admin/areas/AreaFindingsPage';
+import MaterialRequestsPage from './pages/material-requests/MaterialRequestsPage';
+import MaterialRequestDetailPage from './pages/material-requests/MaterialRequestDetailPage';
+import CreateMaterialRequestPage from './pages/material-requests/CreateMaterialRequests';
 
 const ShellLayout = ({ title }: { title: string }) => (
   <AppShell title={title}>
@@ -92,6 +95,9 @@ function App() {
               <Route path="/areas/:id/ordenes" element={<AreaWorkOrdersPage />} />
               <Route path="/areas/:id/maquinas" element={<AreaMachinesPage />} />
               <Route path="/areas/:id/hallazgos" element={<AreaFindingsPage />} />
+              <Route path="/solicitud-material" element={<MaterialRequestsPage />} />
+              <Route path="/solicitud-material/:id" element={<MaterialRequestDetailPage />} />
+              <Route path="/solicitud-material/nueva" element={<CreateMaterialRequestPage />} />
             </Route>
           </Route>
 

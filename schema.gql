@@ -192,6 +192,10 @@ input CreateMaterialRequestInput {
   boss: String!
   category: String!
   comments: String
+  customMachineBrand: String!
+  customMachineManufacturer: String!
+  customMachineModel: String!
+  customMachineName: String!
   importance: String!
   isGenericAllowed: Boolean!
   items: [CreateMaterialRequestItemInput!]! = []
@@ -206,15 +210,15 @@ input CreateMaterialRequestItemInput {
   brand: String
   description: String
   materialId: ID
-  materialRequestId: ID!
+  materialRequestId: ID
   model: String
   partNumber: String
-  proposedMaxStock: Float
-  proposedMinStock: Float
-  requestedQuantity: Float!
+  proposedMaxStock: Int
+  proposedMinStock: Int
+  requestedQuantity: Int
   sku: String
   sparePartId: ID
-  unitOfMeasure: String!
+  unitOfMeasure: String
 }
 
 input CreatePositionInput {
@@ -592,6 +596,10 @@ type MaterialRequest {
   category: RequestCategory!
   comments: String
   createdAt: DateTime!
+  customMachineBrand: String
+  customMachineManufacturer: String
+  customMachineModel: String
+  customMachineName: String
   folio: String!
   id: ID!
   importance: RequestImportance!
@@ -614,17 +622,17 @@ type MaterialRequestItem {
   createdAt: DateTime!
   description: String
   id: ID!
-  material: Material!
-  materialId: ID!
+  material: Material
+  materialId: ID
   model: String
   partNumber: String
-  proposedMaxStock: Float
-  proposedMinStock: Float
-  requestedQuantity: Float!
+  proposedMaxStock: Int
+  proposedMinStock: Int
+  requestedQuantity: Int
   sku: String
-  sparePart: SparePart!
-  sparePartId: ID!
-  unitOfMeasure: String!
+  sparePart: SparePart
+  sparePartId: ID
+  unitOfMeasure: String
   updatedAt: DateTime!
 }
 
@@ -941,6 +949,7 @@ type Query {
   areas: [Area!]!
   areasActive: [Area!]!
   areasWithDeleted: [Area!]!
+  bossesByPositionName: [Technician!]!
   dashboardData(input: DashboardInput!): DashboardData!
   department(id: ID!): Department
   departments: [Department!]!
@@ -1334,6 +1343,10 @@ input UpdateMaterialRequestInput {
   boss: String
   category: String
   comments: String
+  customMachineBrand: String
+  customMachineManufacturer: String
+  customMachineModel: String
+  customMachineName: String
   id: ID!
   importance: String
   isGenericAllowed: Boolean
